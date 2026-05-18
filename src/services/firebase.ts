@@ -1,6 +1,9 @@
 // Serviço de integração com o Firebase
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import type { Auth, User } from 'firebase/auth';
 import type { Product, StoreSettings, Category } from '../types';
 import { storeService, INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_SETTINGS } from './store';
 
@@ -14,13 +17,15 @@ const firebaseConfig = {
   measurementId: "G-339VCR2Y3J"
 };
 
-let db: any = null;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
 let isFirebaseConfigured = false;
 
 try {
   if (firebaseConfig.apiKey && firebaseConfig.apiKey.startsWith('AIza')) {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
+    auth = getAuth(app);
     isFirebaseConfigured = true;
     console.log('Firebase inicializado com sucesso no projeto:', firebaseConfig.projectId);
   } else {
@@ -33,6 +38,25 @@ try {
 export const firebaseService = {
   isConfigured() {
     return isFirebaseConfigured;
+  },
+
+  getAuthInstance() {
+    return auth;
+  },
+
+  async loginAdmin(email: string, pass: string): Promise<void> {
+    if (!auth) throw new Error('Firebase Auth não configurado ou offline.');
+    await signInWithEmailAndPassword(auth, email, pass);
+  },
+
+  async logoutAdmin(): Promise<void> {
+    if (!auth) return;
+    await signOut(auth);
+  },
+
+  onAuthStateChanged(callback: (user: User | null) => void): () => void {
+    if (!auth) return () => {};
+    return onAuthStateChanged(auth, callback);
   },
 
   async seedInitialDataIfEmpty(forceProducts = false): Promise<void> {
@@ -95,23 +119,31 @@ export const firebaseService = {
   },
 
   async saveProductToFirebase(product: Product): Promise<void> {
-    if (!isFirebaseConfigured || !db) {
-      const current = storeService.getProducts();
-      const updated = current.map(p => p.id === product.id ? product : p);
-      if (!current.some(p => p.id === product.id)) updated.push(product);
-      storeService.saveProducts(updated);
-      return;
+    const current = storeService.getProducts();
+    const updated = current.map(p => p.id === product.id ? product : p);
+    if (!current.some(p => p.id === product.id)) updated.push(product);
+    storeService.saveProducts(updated);
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'products', product.id), product);
+      } catch {
+        console.warn('Erro ao salvar no Firestore (verifique as Regras de Segurança no console do Firebase). Produto salvo localmente.');
+      }
     }
-    await setDoc(doc(db, 'products', product.id), product);
   },
 
   async deleteProductFromFirebase(id: string): Promise<void> {
-    if (!isFirebaseConfigured || !db) {
-      const current = storeService.getProducts();
-      storeService.saveProducts(current.filter(p => p.id !== id));
-      return;
+    const current = storeService.getProducts();
+    storeService.saveProducts(current.filter(p => p.id !== id));
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await deleteDoc(doc(db, 'products', id));
+      } catch {
+        console.warn('Erro ao deletar no Firestore. Produto excluído localmente.');
+      }
     }
-    await deleteDoc(doc(db, 'products', id));
   },
 
   async syncCategoriesFromFirebase(): Promise<Category[]> {
@@ -133,23 +165,31 @@ export const firebaseService = {
   },
 
   async saveCategoryToFirebase(category: Category): Promise<void> {
-    if (!isFirebaseConfigured || !db) {
-      const current = storeService.getCategories();
-      const updated = current.map(c => c.id === category.id ? category : c);
-      if (!current.some(c => c.id === category.id)) updated.push(category);
-      storeService.saveCategories(updated);
-      return;
+    const current = storeService.getCategories();
+    const updated = current.map(c => c.id === category.id ? category : c);
+    if (!current.some(c => c.id === category.id)) updated.push(category);
+    storeService.saveCategories(updated);
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'categories', category.id), category);
+      } catch {
+        console.warn('Erro ao salvar categoria no Firestore. Salvo localmente.');
+      }
     }
-    await setDoc(doc(db, 'categories', category.id), category);
   },
 
   async deleteCategoryFromFirebase(id: string): Promise<void> {
-    if (!isFirebaseConfigured || !db) {
-      const current = storeService.getCategories();
-      storeService.saveCategories(current.filter(c => c.id !== id));
-      return;
+    const current = storeService.getCategories();
+    storeService.saveCategories(current.filter(c => c.id !== id));
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await deleteDoc(doc(db, 'categories', id));
+      } catch {
+        console.warn('Erro ao excluir categoria no Firestore. Excluído localmente.');
+      }
     }
-    await deleteDoc(doc(db, 'categories', id));
   },
 
   async getSettingsFromFirebase(): Promise<StoreSettings> {
@@ -172,11 +212,14 @@ export const firebaseService = {
   },
 
   async saveSettingsToFirebase(settings: StoreSettings): Promise<void> {
-    if (!isFirebaseConfigured || !db) {
-      storeService.saveSettings(settings);
-      return;
-    }
-    await setDoc(doc(db, 'settings', 'general'), settings);
     storeService.saveSettings(settings);
+
+    if (isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'settings', 'general'), settings);
+      } catch (e) {
+        console.warn('Erro ao salvar configurações no Firestore (verifique regras de segurança). Salvo localmente.', e);
+      }
+    }
   }
 };

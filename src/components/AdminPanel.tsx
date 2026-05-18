@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Save, CheckCircle, Database, AlertTriangle, ArrowLeft, Upload, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Save, CheckCircle, Database, AlertTriangle, ArrowLeft, Upload, Image as ImageIcon, LogOut } from 'lucide-react';
 import type { Product, StoreSettings, Category } from '../types';
 import { firebaseService } from '../services/firebase';
 import { convertToWebP } from '../utils/image';
@@ -24,8 +24,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   onBackToStore,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
+  const [loadingAuth, setLoadingAuth] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = firebaseService.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setEmailInput(user.email || '');
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'settings'>('products');
   
@@ -43,14 +55,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [saveSuccess, setSaveSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordInput === 'dolearte2026') {
-      setIsAuthenticated(true);
-      setAuthError('');
-    } else {
-      setAuthError('Senha incorreta. A senha padrão é dolearte2026');
+    setAuthError('');
+    setLoadingAuth(true);
+
+    try {
+      if (firebaseService.isConfigured() && emailInput) {
+        await firebaseService.loginAdmin(emailInput, passwordInput);
+        setIsAuthenticated(true);
+      } else if (passwordInput === 'dolearte2026') {
+        setIsAuthenticated(true);
+      } else {
+        setAuthError('Informe o e-mail cadastrado ou verifique a senha.');
+      }
+    } catch (err) {
+      console.error(err);
+      const error = err as { code?: string; message?: string };
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        setAuthError('E-mail ou senha incorretos.');
+      } else {
+        setAuthError('Erro na autenticação. Verifique as credenciais no Firebase.');
+      }
+    } finally {
+      setLoadingAuth(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await firebaseService.logoutAdmin();
+    setIsAuthenticated(false);
+    setPasswordInput('');
   };
 
   // Upload e Conversão de Imagem para WebP
@@ -63,6 +98,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       const webpDataUrl = await convertToWebP(file, 1000, 0.85);
       setEditingProduct({ ...editingProduct, imageUrl: webpDataUrl });
     } catch (err) {
+      console.error(err);
       alert('Erro ao converter imagem para WebP.');
     } finally {
       setImgUploading(false);
@@ -90,6 +126,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setSaveSuccess('Produto salvo com sucesso!');
       setTimeout(() => setSaveSuccess(''), 3000);
     } catch (err) {
+      console.error(err);
       alert('Erro ao salvar o produto.');
     } finally {
       setLoading(false);
@@ -137,7 +174,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setLoading(true);
     try {
       // Se for nova, cria o ID simples em lowercase
-      let finalCat = { ...editingCategory };
+      const finalCat = { ...editingCategory };
       if (isAddingNewCategory) {
         const slugId = finalCat.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
         finalCat.id = slugId || finalCat.id;
@@ -158,6 +195,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setSaveSuccess('Categoria salva com sucesso!');
       setTimeout(() => setSaveSuccess(''), 3000);
     } catch (err) {
+      console.error(err);
       alert('Erro ao salvar a categoria.');
     } finally {
       setLoading(false);
@@ -187,6 +225,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       setSaveSuccess('Configurações salvas com sucesso!');
       setTimeout(() => setSaveSuccess(''), 3000);
     } catch (err) {
+      console.error(err);
       alert('Erro ao salvar as configurações.');
     } finally {
       setLoading(false);
@@ -204,7 +243,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             <Database size={22} /> Painel Administrativo DoLe Arte
           </h2>
         </div>
-        <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>Ambiente Seguro</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {isAuthenticated && (
+            <button onClick={handleLogout} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <LogOut size={16} /> Sair
+            </button>
+          )}
+          <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>Ambiente Seguro • SSL</div>
+        </div>
       </header>
 
       <main className="container" style={{ marginTop: '40px', maxWidth: '1100px' }}>
@@ -212,23 +258,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
           <div style={{ background: '#fff', padding: '48px 40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(13,104,100,0.08)', maxWidth: '460px', margin: '60px auto', textAlign: 'center', border: '1px solid rgba(0,0,0,0.05)' }}>
             <h3 style={{ fontSize: '1.8rem', color: '#0d6864', marginBottom: '16px', fontFamily: 'Playfair Display, serif' }}>Acesso Restrito</h3>
             <p style={{ color: '#666', marginBottom: '28px', fontSize: '1rem' }}>
-              Digite a senha administrativa para gerenciar o catálogo, envio de imagens e categorias da loja.
+              Entre com seu e-mail e senha de administrador para gerenciar o catálogo da loja.
             </p>
             <form onSubmit={handleLogin}>
               <input
+                type="email"
+                placeholder="E-mail do administrador..."
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                style={{ width: '100%', padding: '16px 24px', borderRadius: '99px', border: '2px solid #eee', marginBottom: '16px', fontSize: '1.05rem', outline: 'none' }}
+              />
+              <input
                 type="password"
-                placeholder="Senha de acesso..."
+                placeholder="Senha secreta..."
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
                 style={{ width: '100%', padding: '16px 24px', borderRadius: '99px', border: '2px solid #eee', marginBottom: '20px', fontSize: '1.05rem', outline: 'none' }}
               />
               {authError && <div style={{ color: '#ff5252', marginBottom: '16px', fontSize: '0.95rem' }}>{authError}</div>}
-              <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '16px 32px', fontSize: '1.1rem' }}>
-                Acessar Painel
+              <button type="submit" disabled={loadingAuth} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '16px 32px', fontSize: '1.1rem' }}>
+                {loadingAuth ? 'Autenticando...' : 'Acessar Painel'}
               </button>
             </form>
             <div style={{ marginTop: '24px', fontSize: '0.85rem', color: '#888' }}>
-              Dica: a senha padrão configurada é <strong>dolearte2026</strong>
+              Modo Local: senha padrão <strong>dolearte2026</strong>
             </div>
           </div>
         ) : (
