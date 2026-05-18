@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, CheckCircle, Database, AlertTriangle, ArrowLeft, Upload, Image as ImageIcon, LogOut } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, CheckCircle, Database, AlertTriangle, ArrowLeft, Upload, Image as ImageIcon, LogOut, Sparkles, Coffee, LayoutGrid, Shirt, Gift, Heart } from 'lucide-react';
 import type { Product, StoreSettings, Category } from '../types';
 import { firebaseService } from '../services/firebase';
 import { convertToWebP } from '../utils/image';
@@ -29,6 +29,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(false);
+
+  const renderCategoryIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'Coffee': return <Coffee size={24} />;
+      case 'LayoutGrid': return <LayoutGrid size={24} />;
+      case 'Shirt': return <Shirt size={24} />;
+      case 'Gift': return <Gift size={24} />;
+      case 'Heart': return <Heart size={24} />;
+      default: return <Sparkles size={24} />;
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = firebaseService.onAuthStateChanged((user) => {
@@ -562,7 +573,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       {categories.map((cat) => (
                         <tr key={cat.id}>
                           <td className="cell-icon-col">
-                            [{cat.icon}]
+                            {renderCategoryIcon(cat.icon)}
                           </td>
                           <td className="cell-bold">
                             {cat.name} {cat.id === 'todas' && <span className="cat-fixed-badge">(Fixo)</span>}
