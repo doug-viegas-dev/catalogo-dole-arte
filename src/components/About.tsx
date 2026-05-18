@@ -40,7 +40,7 @@ export const About: React.FC<AboutProps> = ({ settings }) => {
             </div>
             <div className="feat-item">
               <div className="feat-icon"><Sparkles size={24} /></div>
-              <span>Estamparia de Alta Definição</span>
+              <span>Artes profissionais</span>
             </div>
             <div className="feat-item">
               <div className="feat-icon"><Smile size={24} /></div>
