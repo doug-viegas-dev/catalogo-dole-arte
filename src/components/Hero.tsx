@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart, Sparkles, ArrowRight, MessageCircle } from 'lucide-react';
 import type { StoreSettings } from '../types';
 import { getWhatsappLink } from '../utils/whatsapp';
+import '../styles/Hero.scss';
 
 interface HeroProps {
   settings: StoreSettings;

@@ -3,6 +3,7 @@ import { MessageCircle, Menu, X } from 'lucide-react';
 import type { StoreSettings } from '../types';
 import { getWhatsappLink } from '../utils/whatsapp';
 import { InstagramIcon } from './InstagramIcon';
+import '../styles/Navbar.scss';
 
 interface NavbarProps {
   settings: StoreSettings;
@@ -52,8 +53,8 @@ interface NavbarProps {
       <>
         <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
           <div className="container nav-container">
-            <div className="logo" onClick={() => scrollTo('hero')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-              <img src="/logo.png" alt="DoLe Arte Logo" style={{ height: '64px', width: 'auto', objectFit: 'contain' }} />
+            <div className="logo-box" onClick={() => scrollTo('hero')}>
+              <img src="/logo.png" alt="DoLe Arte Logo" className="logo-img" />
             </div>
 
           <ul className="nav-links">
@@ -146,7 +147,7 @@ interface NavbarProps {
               </a>
             </li>
             <li>
-              <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#E1306C' }}>
+              <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="instagram-mobile-link">
                 <InstagramIcon size={20} /> Instagram da Loja
               </a>
             </li>

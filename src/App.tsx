@@ -9,6 +9,7 @@ import { About } from './components/About';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
 import { AdminPanel } from './components/AdminPanel';
+import './App.scss';
 
 import { SPECIAL_DATES, storeService } from './services/store';
 import { firebaseService } from './services/firebase';
@@ -83,12 +84,11 @@ export const App: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fcfaf7', color: '#0d6864', fontSize: '1.5rem', fontFamily: 'Outfit, sans-serif' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '50px', height: '50px', border: '5px solid rgba(13, 104, 100, 0.2)', borderTopColor: '#0d6864', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      <div className="app-loading-screen">
+        <div className="loading-container">
+          <div className="spinner" />
           <span>Carregando Loja DoLe Arte...</span>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }

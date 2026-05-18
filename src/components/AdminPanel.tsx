@@ -3,6 +3,7 @@ import { Plus, Edit, Trash2, Save, CheckCircle, Database, AlertTriangle, ArrowLe
 import type { Product, StoreSettings, Category } from '../types';
 import { firebaseService } from '../services/firebase';
 import { convertToWebP } from '../utils/image';
+import '../styles/AdminPanel.scss';
 
 interface AdminPanelProps {
   products: Product[];
@@ -77,6 +78,24 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       } else {
         setAuthError('Erro na autenticação. Verifique as credenciais no Firebase.');
       }
+    } finally {
+      setLoadingAuth(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setAuthError('');
+    setLoadingAuth(true);
+    try {
+      if (firebaseService.isConfigured()) {
+        await firebaseService.loginWithGoogle();
+        setIsAuthenticated(true);
+      } else {
+        setAuthError('Firebase não está configurado para autenticação na nuvem.');
+      }
+    } catch (err) {
+      console.error('Erro no login do Google:', err);
+      setAuthError('Não foi possível entrar com o Google.');
     } finally {
       setLoadingAuth(false);
     }
@@ -233,31 +252,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   return (
-    <div className="admin-page-container" style={{ minHeight: '100vh', background: '#fcfaf7', paddingBottom: '80px' }}>
-      <header className="admin-topbar" style={{ background: '#0d6864', color: '#fff', padding: '20px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={onBackToStore} className="btn-secondary" style={{ padding: '8px 16px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <div className="admin-page-container">
+      <header className="admin-topbar">
+        <div className="admin-topbar-left">
+          <button onClick={onBackToStore} className="btn-secondary btn-back">
             <ArrowLeft size={16} /> Voltar para a Loja
           </button>
-          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Playfair Display, serif', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <h2>
             <Database size={22} /> Painel Administrativo DoLe Arte
           </h2>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div className="admin-topbar-right">
           {isAuthenticated && (
-            <button onClick={handleLogout} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button onClick={handleLogout} className="btn-secondary btn-logout">
               <LogOut size={16} /> Sair
             </button>
           )}
-          <div style={{ fontSize: '0.85rem', opacity: 0.8 }}>Ambiente Seguro • SSL</div>
+          <div className="ssl-badge">Ambiente Seguro • SSL</div>
         </div>
       </header>
 
-      <main className="container" style={{ marginTop: '40px', maxWidth: '1100px' }}>
+      <main className="container admin-main-container">
         {!isAuthenticated ? (
-          <div style={{ background: '#fff', padding: '48px 40px', borderRadius: '24px', boxShadow: '0 10px 30px rgba(13,104,100,0.08)', maxWidth: '460px', margin: '60px auto', textAlign: 'center', border: '1px solid rgba(0,0,0,0.05)' }}>
-            <h3 style={{ fontSize: '1.8rem', color: '#0d6864', marginBottom: '16px', fontFamily: 'Playfair Display, serif' }}>Acesso Restrito</h3>
-            <p style={{ color: '#666', marginBottom: '28px', fontSize: '1rem' }}>
+          <div className="auth-card">
+            <h3 className="auth-title">Acesso Restrito</h3>
+            <p className="auth-subtitle">
               Entre com seu e-mail e senha de administrador para gerenciar o catálogo da loja.
             </p>
             <form onSubmit={handleLogin}>
@@ -266,60 +285,75 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 placeholder="E-mail do administrador..."
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
-                style={{ width: '100%', padding: '16px 24px', borderRadius: '99px', border: '2px solid #eee', marginBottom: '16px', fontSize: '1.05rem', outline: 'none' }}
+                className="auth-input"
               />
               <input
                 type="password"
                 placeholder="Senha secreta..."
                 value={passwordInput}
                 onChange={(e) => setPasswordInput(e.target.value)}
-                style={{ width: '100%', padding: '16px 24px', borderRadius: '99px', border: '2px solid #eee', marginBottom: '20px', fontSize: '1.05rem', outline: 'none' }}
+                className="auth-input"
               />
-              {authError && <div style={{ color: '#ff5252', marginBottom: '16px', fontSize: '0.95rem' }}>{authError}</div>}
-              <button type="submit" disabled={loadingAuth} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '16px 32px', fontSize: '1.1rem' }}>
-                {loadingAuth ? 'Autenticando...' : 'Acessar Painel'}
+              {authError && <div className="auth-error">{authError}</div>}
+              <button type="submit" disabled={loadingAuth} className="btn-primary auth-btn">
+                {loadingAuth ? 'Autenticando...' : 'Acessar Painel com E-mail'}
+              </button>
+
+              <div className="divider-row">
+                <div className="line" />
+                <span>ou</span>
+                <div className="line" />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={loadingAuth}
+                className="btn-google"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                Continuar com o Google
               </button>
             </form>
-            <div style={{ marginTop: '24px', fontSize: '0.85rem', color: '#888' }}>
-              Modo Local: senha padrão <strong>dolearte2026</strong>
-            </div>
           </div>
         ) : (
-          <div style={{ background: '#fff', borderRadius: '24px', boxShadow: '0 10px 35px rgba(0,0,0,0.06)', padding: '40px', border: '1px solid rgba(0,0,0,0.05)' }}>
-            <div className="tabs-nav" style={{ display: 'flex', gap: '20px', borderBottom: '2px solid #eee', marginBottom: '32px' }}>
+          <div className="admin-content-card">
+            <div className="admin-tabs-nav">
               <button
-                className={activeTab === 'products' ? 'active' : ''}
+                className={`admin-tab-btn ${activeTab === 'products' ? 'active' : ''}`}
                 onClick={() => { setActiveTab('products'); setEditingProduct(null); setIsAddingNewProduct(false); setEditingCategory(null); }}
-                style={{ fontSize: '1.1rem', padding: '12px 24px', background: 'none', border: 'none', borderBottom: activeTab === 'products' ? '3px solid #0d6864' : '3px solid transparent', color: activeTab === 'products' ? '#0d6864' : '#666', fontWeight: 600, cursor: 'pointer' }}
               >
                 Produtos ({products.length})
               </button>
               <button
-                className={activeTab === 'categories' ? 'active' : ''}
+                className={`admin-tab-btn ${activeTab === 'categories' ? 'active' : ''}`}
                 onClick={() => { setActiveTab('categories'); setEditingCategory(null); setIsAddingNewCategory(false); setEditingProduct(null); }}
-                style={{ fontSize: '1.1rem', padding: '12px 24px', background: 'none', border: 'none', borderBottom: activeTab === 'categories' ? '3px solid #0d6864' : '3px solid transparent', color: activeTab === 'categories' ? '#0d6864' : '#666', fontWeight: 600, cursor: 'pointer' }}
               >
                 Categorias ({categories.length})
               </button>
               <button
-                className={activeTab === 'settings' ? 'active' : ''}
+                className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
                 onClick={() => { setActiveTab('settings'); setEditingProduct(null); setEditingCategory(null); }}
-                style={{ fontSize: '1.1rem', padding: '12px 24px', background: 'none', border: 'none', borderBottom: activeTab === 'settings' ? '3px solid #0d6864' : '3px solid transparent', color: activeTab === 'settings' ? '#0d6864' : '#666', fontWeight: 600, cursor: 'pointer' }}
               >
                 Configurações do Site
               </button>
             </div>
 
             {saveSuccess && (
-              <div style={{ background: '#d4edda', color: '#155724', padding: '16px 24px', borderRadius: '16px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.05rem', fontWeight: 500 }}>
+              <div className="admin-alert-success">
                 <CheckCircle size={22} />
                 <span>{saveSuccess}</span>
               </div>
             )}
 
             {!firebaseService.isConfigured() && (
-              <div style={{ background: '#fff3cd', color: '#856404', padding: '16px 24px', borderRadius: '16px', marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.95rem' }}>
-                <AlertTriangle size={22} style={{ flexShrink: 0 }} />
+              <div className="admin-alert-warning">
+                <AlertTriangle size={22} className="alert-icon" />
                 <span>
                   Modo de Armazenamento Local (LocalStorage). Para sincronizar na nuvem, insira suas chaves do Firebase no arquivo <code>.env</code>.
                 </span>
@@ -329,47 +363,47 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* ABA: PRODUTOS */}
             {activeTab === 'products' && !editingProduct && (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
-                  <h3 style={{ fontSize: '1.5rem', color: '#0d6864', margin: 0 }}>Gerenciamento de Produtos</h3>
-                  <button onClick={handleStartAddProduct} className="btn-primary" style={{ padding: '12px 26px' }}>
+                <div className="admin-section-header">
+                  <h3>Gerenciamento de Produtos</h3>
+                  <button onClick={handleStartAddProduct} className="btn-primary btn-add">
                     <Plus size={18} /> Adicionar Novo Produto
                   </button>
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                  <table className="products-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="admin-table-container">
+                  <table className="admin-table">
                     <thead>
-                      <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #eee' }}>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864' }}>Imagem</th>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864' }}>Nome do Produto</th>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864' }}>Categoria</th>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864' }}>Preço Inicial</th>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864' }}>Estoque</th>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864' }}>Ações</th>
+                      <tr>
+                        <th>Imagem</th>
+                        <th>Nome do Produto</th>
+                        <th>Categoria</th>
+                        <th>Preço Inicial</th>
+                        <th>Estoque</th>
+                        <th>Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {products.map((prod) => (
-                        <tr key={prod.id} style={{ borderBottom: '1px solid #eee' }}>
-                          <td style={{ padding: '16px' }}>
-                            <img src={prod.imageUrl} alt={prod.name} style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '12px', border: '1px solid #ddd' }} />
+                        <tr key={prod.id}>
+                          <td>
+                            <img src={prod.imageUrl} alt={prod.name} className="table-img" />
                           </td>
-                          <td style={{ padding: '16px', fontWeight: 600, fontSize: '1.05rem' }}>{prod.name}</td>
-                          <td style={{ padding: '16px', textTransform: 'capitalize', color: '#666' }}>
+                          <td className="cell-bold">{prod.name}</td>
+                          <td className="cell-category">
                             {categories.find(c => c.id === prod.category)?.name || prod.category}
                           </td>
-                          <td style={{ padding: '16px', fontWeight: 600, color: '#df842a' }}>R$ {prod.price.toFixed(2)}</td>
-                          <td style={{ padding: '16px' }}>
-                            <span style={{ padding: '6px 14px', borderRadius: '99px', fontSize: '0.85rem', fontWeight: 600, background: prod.inStock ? '#d4edda' : '#f8d7da', color: prod.inStock ? '#155724' : '#721c24' }}>
+                          <td className="cell-price">R$ {prod.price.toFixed(2)}</td>
+                          <td>
+                            <span className={`stock-badge ${prod.inStock ? 'available' : 'out'}`}>
                               {prod.inStock ? 'Disponível' : 'Esgotado'}
                             </span>
                           </td>
-                          <td style={{ padding: '16px' }}>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <button onClick={() => setEditingProduct(prod)} style={{ padding: '8px 16px', borderRadius: '10px', border: 'none', background: '#eef6f6', color: '#0d6864', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <td>
+                            <div className="actions-cell">
+                              <button onClick={() => setEditingProduct(prod)} className="btn-edit">
                                 <Edit size={16} /> Editar
                               </button>
-                              <button onClick={() => handleDeleteProduct(prod.id)} style={{ padding: '8px 16px', borderRadius: '10px', border: 'none', background: '#fdf3f4', color: '#dc3545', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <button onClick={() => handleDeleteProduct(prod.id)} className="btn-delete">
                                 <Trash2 size={16} /> Excluir
                               </button>
                             </div>
@@ -385,56 +419,56 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* FORMULÁRIO DE PRODUTO */}
             {activeTab === 'products' && editingProduct && (
               <form onSubmit={handleSaveProduct}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                  <h3 style={{ fontSize: '1.6rem', color: '#0d6864', margin: 0 }}>
+                <div className="form-header">
+                  <h3>
                     {isAddingNewProduct ? 'Cadastrar Novo Produto' : `Editar Produto: ${editingProduct.name}`}
                   </h3>
-                  <button type="button" onClick={() => setEditingProduct(null)} className="btn-secondary" style={{ padding: '10px 20px' }}>
+                  <button type="button" onClick={() => setEditingProduct(null)} className="btn-secondary">
                     Cancelar
                   </button>
                 </div>
 
-                <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600, color: '#333' }}>Nome do Produto</label>
+                <div className="form-grid">
+                  <div className="form-group full-width">
+                    <label>Nome do Produto</label>
                     <input
                       type="text"
                       required
                       value={editingProduct.name}
                       onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600, color: '#333' }}>Descrição Curta</label>
+                  <div className="form-group full-width">
+                    <label>Descrição Curta</label>
                     <textarea
                       required
                       rows={3}
                       value={editingProduct.description}
                       onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600, color: '#333' }}>Preço "A partir de" (R$)</label>
+                  <div className="form-group">
+                    <label>Preço "A partir de" (R$)</label>
                     <input
                       type="number"
                       step="0.01"
                       required
                       value={editingProduct.price}
                       onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600, color: '#333' }}>Categoria</label>
+                  <div className="form-group">
+                    <label>Categoria</label>
                     <select
                       value={editingProduct.category}
                       onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none', background: '#fff' }}
+                      className="form-control"
                     >
                       {categories.filter(c => c.id !== 'todas').map(cat => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -443,61 +477,61 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
 
                   {/* UPLOAD DE ARQUIVO DE IMAGEM */}
-                  <div style={{ gridColumn: '1 / -1', background: '#f8f9fa', padding: '24px', borderRadius: '16px', border: '2px dashed #cbd5e1', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <label style={{ fontWeight: 600, color: '#0d6864', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="upload-box">
+                    <label className="upload-label">
                       <Upload size={20} />
                       Enviar Foto do Produto (Conversão Automática para WebP)
                     </label>
-                    <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>
+                    <p className="upload-desc">
                       Selecione um arquivo de imagem. Ele será automaticamente redimensionado e convertido para o formato WebP para garantir máxima velocidade de carregamento e economia de banco de dados.
                     </p>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-                      <label style={{ padding: '14px 28px', background: '#0d6864', color: '#fff', borderRadius: '99px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '10px', transition: 'all 0.2s' }}>
+                    <div className="upload-actions">
+                      <label className="btn-choose">
                         <ImageIcon size={20} /> Escolher Arquivo...
-                        <input type="file" accept="image/*" onChange={handleImageFileChange} style={{ display: 'none' }} />
+                        <input type="file" accept="image/*" onChange={handleImageFileChange} className="hidden-input" />
                       </label>
 
-                      {imgUploading && <span style={{ color: '#df842a', fontWeight: 600 }}>Convertendo imagem para WebP... ⏳</span>}
+                      {imgUploading && <span className="converting-msg">Convertendo imagem para WebP... ⏳</span>}
                     </div>
 
                     {editingProduct.imageUrl && (
-                      <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        <img src={editingProduct.imageUrl} alt="Prévia" style={{ width: '120px', height: '120px', objectFit: 'cover', borderRadius: '14px', border: '2px solid #df842a' }} />
-                        <div style={{ overflow: 'hidden' }}>
-                          <span style={{ fontWeight: 600, color: '#28a745', display: 'block', fontSize: '0.95rem' }}>✓ Imagem pronta no formato WebP</span>
-                          <span style={{ fontSize: '0.8rem', color: '#888', wordBreak: 'break-all' }}>{editingProduct.imageUrl.substring(0, 60)}...</span>
+                      <div className="preview-box">
+                        <img src={editingProduct.imageUrl} alt="Prévia" className="img-preview" />
+                        <div className="preview-info">
+                          <span className="ready-title">✓ Imagem pronta no formato WebP</span>
+                          <span className="url-text">{editingProduct.imageUrl.substring(0, 60)}...</span>
                         </div>
                       </div>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600, color: '#333' }}>Status de Estoque</label>
+                  <div className="form-group">
+                    <label>Status de Estoque</label>
                     <select
                       value={editingProduct.inStock ? 'true' : 'false'}
                       onChange={(e) => setEditingProduct({ ...editingProduct, inStock: e.target.value === 'true' })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none', background: '#fff' }}
+                      className="form-control"
                     >
                       <option value="true">Disponível em Estoque</option>
                       <option value="false">Esgotado / Indisponível</option>
                     </select>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600, color: '#333' }}>Destaque na Página Inicial</label>
+                  <div className="form-group">
+                    <label>Destaque na Página Inicial</label>
                     <select
                       value={editingProduct.featured ? 'true' : 'false'}
                       onChange={(e) => setEditingProduct({ ...editingProduct, featured: e.target.value === 'true' })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none', background: '#fff' }}
+                      className="form-control"
                     >
                       <option value="true">Sim, exibir com destaque</option>
                       <option value="false">Não</option>
                     </select>
                   </div>
 
-                  <div style={{ gridColumn: '1 / -1', marginTop: '24px' }}>
-                    <button type="submit" disabled={loading || imgUploading} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '16px 32px', fontSize: '1.15rem' }}>
+                  <div className="form-submit-row">
+                    <button type="submit" disabled={loading || imgUploading} className="btn-primary btn-save-full">
                       <Save size={22} /> {loading ? 'Salvando...' : 'Salvar Produto no Catálogo'}
                     </button>
                   </div>
@@ -508,38 +542,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* ABA: CATEGORIAS */}
             {activeTab === 'categories' && !editingCategory && (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '16px' }}>
-                  <h3 style={{ fontSize: '1.5rem', color: '#0d6864', margin: 0 }}>Gerenciar Categorias da Loja</h3>
-                  <button onClick={handleStartAddCategory} className="btn-primary" style={{ padding: '12px 26px' }}>
+                <div className="admin-section-header">
+                  <h3>Gerenciar Categorias da Loja</h3>
+                  <button onClick={handleStartAddCategory} className="btn-primary btn-add">
                     <Plus size={18} /> Adicionar Nova Categoria
                   </button>
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <div className="admin-table-container">
+                  <table className="admin-table">
                     <thead>
-                      <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #eee' }}>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864', width: '120px' }}>Ícone</th>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864' }}>Nome da Categoria</th>
-                        <th style={{ padding: '16px', textAlign: 'left', color: '#0d6864', width: '200px' }}>Ações</th>
+                      <tr>
+                        <th className="th-icon">Ícone</th>
+                        <th>Nome da Categoria</th>
+                        <th className="th-actions">Ações</th>
                       </tr>
                     </thead>
                     <tbody>
                       {categories.map((cat) => (
-                        <tr key={cat.id} style={{ borderBottom: '1px solid #eee' }}>
-                          <td style={{ padding: '16px', fontWeight: 600, color: '#df842a', fontSize: '1.2rem' }}>
+                        <tr key={cat.id}>
+                          <td className="cell-icon-col">
                             [{cat.icon}]
                           </td>
-                          <td style={{ padding: '16px', fontWeight: 600, fontSize: '1.1rem' }}>
-                            {cat.name} {cat.id === 'todas' && <span style={{ fontSize: '0.8rem', color: '#888' }}>(Fixo)</span>}
+                          <td className="cell-bold">
+                            {cat.name} {cat.id === 'todas' && <span className="cat-fixed-badge">(Fixo)</span>}
                           </td>
-                          <td style={{ padding: '16px' }}>
+                          <td>
                             {cat.id !== 'todas' && (
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <button onClick={() => setEditingCategory(cat)} style={{ padding: '8px 16px', borderRadius: '10px', border: 'none', background: '#eef6f6', color: '#0d6864', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <div className="actions-cell">
+                                <button onClick={() => setEditingCategory(cat)} className="btn-edit">
                                   <Edit size={16} /> Editar
                                 </button>
-                                <button onClick={() => handleDeleteCategory(cat.id)} style={{ padding: '8px 16px', borderRadius: '10px', border: 'none', background: '#fdf3f4', color: '#dc3545', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <button onClick={() => handleDeleteCategory(cat.id)} className="btn-delete">
                                   <Trash2 size={16} /> Excluir
                                 </button>
                               </div>
@@ -555,34 +589,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
             {activeTab === 'categories' && editingCategory && (
               <form onSubmit={handleSaveCategory}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-                  <h3 style={{ fontSize: '1.6rem', color: '#0d6864', margin: 0 }}>
+                <div className="form-header">
+                  <h3>
                     {isAddingNewCategory ? 'Cadastrar Nova Categoria' : `Editar Categoria: ${editingCategory.name}`}
                   </h3>
-                  <button type="button" onClick={() => setEditingCategory(null)} className="btn-secondary" style={{ padding: '10px 20px' }}>
+                  <button type="button" onClick={() => setEditingCategory(null)} className="btn-secondary">
                     Cancelar
                   </button>
                 </div>
 
-                <div className="form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '600px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600, color: '#333' }}>Nome da Categoria</label>
+                <div className="form-grid max-w-600">
+                  <div className="form-group full-width">
+                    <label>Nome da Categoria</label>
                     <input
                       type="text"
                       required
                       value={editingCategory.name}
                       onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
                       placeholder="Ex: Quadros Decorativos"
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600, color: '#333' }}>Ícone da Categoria</label>
+                  <div className="form-group full-width">
+                    <label>Ícone da Categoria</label>
                     <select
                       value={editingCategory.icon}
                       onChange={(e) => setEditingCategory({ ...editingCategory, icon: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none', background: '#fff' }}
+                      className="form-control"
                     >
                       <option value="Sparkles">✨ Sparkles (Brilho geral)</option>
                       <option value="Coffee">☕ Coffee (Canecas / Copos)</option>
@@ -593,8 +627,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     </select>
                   </div>
 
-                  <div style={{ marginTop: '16px' }}>
-                    <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '16px 32px', fontSize: '1.15rem' }}>
+                  <div className="form-submit-row">
+                    <button type="submit" disabled={loading} className="btn-primary btn-save-full">
                       <Save size={22} /> {loading ? 'Salvando...' : 'Salvar Categoria'}
                     </button>
                   </div>
@@ -605,102 +639,104 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {/* ABA: CONFIGURAÇÕES */}
             {activeTab === 'settings' && (
               <form onSubmit={handleSaveSettings}>
-                <h3 style={{ fontSize: '1.5rem', color: '#0d6864', marginBottom: '8px' }}>Configurações Gerais do Site</h3>
-                <p style={{ color: '#666', marginBottom: '32px' }}>
+                <div className="form-header mb-16">
+                  <h3>Configurações Gerais do Site</h3>
+                </div>
+                <p className="settings-desc">
                   Ajuste o número do WhatsApp de atendimento e os textos apresentados nas páginas da loja.
                 </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600 }}>Nome da Loja</label>
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Nome da Loja</label>
                     <input
                       type="text"
                       required
                       value={localSettings.storeName}
                       onChange={(e) => setLocalSettings({ ...localSettings, storeName: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600 }}>WhatsApp de Atendimento (DDD + Número)</label>
+                  <div className="form-group">
+                    <label>WhatsApp de Atendimento (DDD + Número)</label>
                     <input
                       type="text"
                       required
                       value={localSettings.whatsappNumber}
                       onChange={(e) => setLocalSettings({ ...localSettings, whatsappNumber: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600 }}>URL do Instagram</label>
+                  <div className="form-group full-width">
+                    <label>URL do Instagram</label>
                     <input
                       type="url"
                       required
                       value={localSettings.instagramUrl}
                       onChange={(e) => setLocalSettings({ ...localSettings, instagramUrl: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600 }}>Título Principal do Banner (Hero)</label>
+                  <div className="form-group full-width">
+                    <label>Título Principal do Banner (Hero)</label>
                     <input
                       type="text"
                       required
                       value={localSettings.heroTitle}
                       onChange={(e) => setLocalSettings({ ...localSettings, heroTitle: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600 }}>Subtítulo Principal do Banner</label>
+                  <div className="form-group full-width">
+                    <label>Subtítulo Principal do Banner</label>
                     <textarea
                       required
                       rows={3}
                       value={localSettings.heroSubtitle}
                       onChange={(e) => setLocalSettings({ ...localSettings, heroSubtitle: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600 }}>História da Marca ("Sobre a Loja")</label>
+                  <div className="form-group full-width">
+                    <label>História da Marca ("Sobre a Loja")</label>
                     <textarea
                       required
                       rows={5}
                       value={localSettings.aboutText}
                       onChange={(e) => setLocalSettings({ ...localSettings, aboutText: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600 }}>E-mail de Contato</label>
+                  <div className="form-group">
+                    <label>E-mail de Contato</label>
                     <input
                       type="email"
                       required
                       value={localSettings.contactEmail}
                       onChange={(e) => setLocalSettings({ ...localSettings, contactEmail: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: 600 }}>Horários de Atendimento</label>
+                  <div className="form-group">
+                    <label>Horários de Atendimento</label>
                     <input
                       type="text"
                       required
                       value={localSettings.contactHours}
                       onChange={(e) => setLocalSettings({ ...localSettings, contactHours: e.target.value })}
-                      style={{ padding: '14px 18px', borderRadius: '14px', border: '1px solid #ccc', fontSize: '1.05rem', outline: 'none' }}
+                      className="form-control"
                     />
                   </div>
 
-                  <div style={{ gridColumn: '1 / -1', marginTop: '24px' }}>
-                    <button type="submit" disabled={loading} className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '16px 32px', fontSize: '1.15rem' }}>
+                  <div className="form-submit-row">
+                    <button type="submit" disabled={loading} className="btn-primary btn-save-full">
                       <Save size={22} /> {loading ? 'Salvando...' : 'Salvar Todas as Configurações'}
                     </button>
                   </div>

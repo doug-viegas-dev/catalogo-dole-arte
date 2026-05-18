@@ -1,0 +1,81 @@
+@import './main.scss';
+
+.contact {
+  padding: 100px 0;
+  background: radial-gradient(circle at bottom, $rose-light 0%, $cream 100%);
+  text-align: center;
+
+  .contact-box {
+    max-width: 800px;
+    margin: 0 auto;
+    background: $white;
+    padding: 64px 40px;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-lg;
+    border: 1px solid rgba(223, 132, 42, 0.2);
+
+    h2 {
+      font-size: 2.8rem;
+      color: $primary;
+      margin-bottom: 16px;
+    }
+
+    p {
+      color: $text-sub;
+      font-size: 1.15rem;
+      margin-bottom: 40px;
+    }
+
+    .contact-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+
+      .btn-contact-large {
+        padding: 16px 36px;
+        font-size: 1.1rem;
+      }
+
+      .btn-instagram {
+        background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+        color: $white;
+        padding: 14px 32px;
+        border-radius: $radius-pill;
+        font-weight: 600;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 6px 20px rgba(220, 39, 67, 0.3);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 25px rgba(220, 39, 67, 0.45);
+        }
+      }
+    }
+
+    .contact-info {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding-top: 36px;
+
+      .info-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: $text-sub;
+        font-size: 0.95rem;
+
+        svg {
+          color: $secondary;
+        }
+      }
+    }
+  }
+}

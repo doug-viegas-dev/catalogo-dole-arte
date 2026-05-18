@@ -3,6 +3,7 @@ import { Heart, MessageCircle } from 'lucide-react';
 import type { StoreSettings } from '../types';
 import { getWhatsappLink } from '../utils/whatsapp';
 import { InstagramIcon } from './InstagramIcon';
+import '../styles/Footer.scss';
 
 interface FooterProps {
   settings: StoreSettings;
@@ -35,12 +36,12 @@ export const Footer: React.FC<FooterProps> = ({ settings }) => {
             <h4>Redes Sociais</h4>
             <ul>
               <li>
-                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="social-link">
                   <MessageCircle size={18} /> WhatsApp
                 </a>
               </li>
               <li>
-                <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="social-link">
                   <InstagramIcon size={18} /> Instagram
                 </a>
               </li>
@@ -49,14 +50,14 @@ export const Footer: React.FC<FooterProps> = ({ settings }) => {
         </div>
 
         <div className="footer-bottom">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="copyright-row">
             <span>&copy; {new Date().getFullYear()} {settings.storeName}. Todos os direitos reservados.</span>
-            <a href="#admin" className="admin-secret-link" title="Acesso Reservado" style={{ opacity: 0.3, transition: 'opacity 0.2s', fontSize: '0.85rem' }}>
+            <a href="#admin" className="admin-secret-link" title="Acesso Reservado">
               🔒
             </a>
           </div>
           <div>
-            Desenvolvido com <Heart size={14} className="heart" style={{ display: 'inline' }} /> para encantar.
+            Desenvolvido com <Heart size={14} className="heart" /> para encantar.
           </div>
         </div>
       </div>

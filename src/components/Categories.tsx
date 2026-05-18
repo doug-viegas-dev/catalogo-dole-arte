@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Coffee, LayoutGrid, Shirt, Gift, Heart } from 'lucide-react';
 import type { Category } from '../types';
+import '../styles/Categories.scss';
 
 interface CategoriesProps {
   categories: Category[];

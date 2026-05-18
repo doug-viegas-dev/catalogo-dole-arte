@@ -1,6 +1,7 @@
 import React from 'react';
 import { HeartHandshake, ShieldCheck, Sparkles, Smile } from 'lucide-react';
 import type { StoreSettings } from '../types';
+import '../styles/About.scss';
 
 interface AboutProps {
   settings: StoreSettings;

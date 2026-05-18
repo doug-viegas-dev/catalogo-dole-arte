@@ -1,0 +1,133 @@
+@import './main.scss';
+
+.hero {
+  padding: 160px 0 100px;
+  background: radial-gradient(circle at top right, $rose-light 0%, $cream 70%);
+  position: relative;
+
+  .hero-container {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 60px;
+    align-items: center;
+
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+  }
+
+  .tagline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(223, 132, 42, 0.12);
+    color: $secondary;
+    padding: 8px 18px;
+    border-radius: $radius-pill;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 3.6rem;
+    line-height: 1.15;
+    color: $primary;
+    margin-bottom: 24px;
+
+    @media (max-width: 768px) {
+      font-size: 2.5rem;
+    }
+
+    .highlight {
+      color: $accent;
+      font-family: 'Dancing Script', cursive;
+      font-size: 4.5rem;
+      font-weight: 700;
+      display: block;
+
+      @media (max-width: 768px) {
+        font-size: 3.5rem;
+      }
+    }
+  }
+
+  p {
+    font-size: 1.25rem;
+    color: $text-sub;
+    margin-bottom: 36px;
+    max-width: 580px;
+
+    @media (max-width: 992px) {
+      margin: 0 auto 36px;
+    }
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+
+    @media (max-width: 992px) {
+      justify-content: center;
+    }
+  }
+
+  .hero-image {
+    position: relative;
+
+    .img-main {
+      width: 100%;
+      height: 520px;
+      object-fit: cover;
+      border-radius: $radius-lg;
+      box-shadow: $shadow-lg;
+      border: 8px solid $white;
+    }
+
+    .floating-card {
+      position: absolute;
+      bottom: -20px;
+      left: -30px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      padding: 20px 24px;
+      border-radius: $radius-md;
+      box-shadow: $shadow-md;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid rgba(223, 132, 42, 0.2);
+
+      @media (max-width: 768px) {
+        left: 10px;
+        bottom: 10px;
+      }
+
+      .icon-box {
+        width: 50px;
+        height: 50px;
+        background: rgba(13, 104, 100, 0.1);
+        color: $primary;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .card-info {
+        text-align: left;
+        h4 {
+          font-size: 1.1rem;
+          color: $primary;
+          margin-bottom: 2px;
+        }
+        span {
+          font-size: 0.85rem;
+          color: $text-sub;
+        }
+      }
+    }
+  }
+}

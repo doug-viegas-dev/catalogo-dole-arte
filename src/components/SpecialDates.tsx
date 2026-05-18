@@ -1,5 +1,6 @@
 import React from 'react';
 import type { SpecialDateItem } from '../types';
+import '../styles/SpecialDates.scss';
 
 interface SpecialDatesProps {
   items: SpecialDateItem[];
@@ -9,7 +10,7 @@ export const SpecialDates: React.FC<SpecialDatesProps> = ({ items }) => {
   return (
     <section id="datas-especiais" className="special-dates">
       <div className="container">
-        <div className="section-header" style={{ textAlign: 'center', marginBottom: '48px' }}>
+        <div className="special-header">
           <h2>Presentes para Datas Especiais</h2>
           <p>Inspirações para emocionar em todas as épocas do ano</p>
         </div>

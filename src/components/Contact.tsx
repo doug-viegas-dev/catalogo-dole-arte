@@ -3,6 +3,7 @@ import { MessageCircle, Mail, Clock } from 'lucide-react';
 import type { StoreSettings } from '../types';
 import { getWhatsappLink } from '../utils/whatsapp';
 import { InstagramIcon } from './InstagramIcon';
+import '../styles/Contact.scss';
 
 interface ContactProps {
   settings: StoreSettings;
@@ -19,7 +20,7 @@ export const Contact: React.FC<ContactProps> = ({ settings }) => {
           <p>Entre em contato pelo nosso WhatsApp ou acompanhe nossas novidades no Instagram</p>
 
           <div className="contact-buttons">
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp" style={{ padding: '16px 36px', fontSize: '1.1rem' }}>
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp btn-contact-large">
               <MessageCircle size={22} />
               <span>Falar no WhatsApp</span>
             </a>

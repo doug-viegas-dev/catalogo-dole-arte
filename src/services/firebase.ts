@@ -2,7 +2,7 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import type { Auth, User } from 'firebase/auth';
 import type { Product, StoreSettings, Category } from '../types';
 import { storeService, INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_SETTINGS } from './store';
@@ -47,6 +47,12 @@ export const firebaseService = {
   async loginAdmin(email: string, pass: string): Promise<void> {
     if (!auth) throw new Error('Firebase Auth não configurado ou offline.');
     await signInWithEmailAndPassword(auth, email, pass);
+  },
+
+  async loginWithGoogle(): Promise<void> {
+    if (!auth) throw new Error('Firebase Auth não configurado ou offline.');
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
   },
 
   async logoutAdmin(): Promise<void> {

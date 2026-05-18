@@ -1,0 +1,80 @@
+@import './main.scss';
+
+.special-dates {
+  padding: 100px 0;
+  background: $cream;
+
+  .special-header {
+    text-align: center;
+    margin-bottom: 48px;
+
+    h2 {
+      font-size: 2.5rem;
+      color: $primary;
+      margin-bottom: 12px;
+    }
+
+    p {
+      color: $text-sub;
+      font-size: 1.1rem;
+    }
+  }
+
+  .dates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+
+    .date-card {
+      position: relative;
+      height: 360px;
+      border-radius: $radius-lg;
+      overflow: hidden;
+      box-shadow: $shadow-md;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(13, 104, 100, 0.95) 0%, rgba(13, 104, 100, 0.4) 50%, rgba(0,0,0,0) 100%);
+        padding: 36px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        color: $white;
+
+        .date-tag {
+          background: $secondary;
+          color: $white;
+          padding: 6px 16px;
+          border-radius: $radius-pill;
+          font-size: 0.8rem;
+          font-weight: 600;
+          align-self: flex-start;
+          margin-bottom: 16px;
+        }
+
+        h3 {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.8rem;
+          margin-bottom: 8px;
+        }
+
+        p {
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 0.95rem;
+        }
+      }
+
+      &:hover img {
+        transform: scale(1.1);
+      }
+    }
+  }
+}

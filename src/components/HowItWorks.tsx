@@ -1,5 +1,6 @@
 import React from 'react';
 import { MousePointer, MessageCircle, CheckCircle2, Gift } from 'lucide-react';
+import '../styles/HowItWorks.scss';
 
 export const HowItWorks: React.FC = () => {
   const steps = [
@@ -32,7 +33,7 @@ export const HowItWorks: React.FC = () => {
   return (
     <section id="como-funciona" className="how-it-works">
       <div className="container">
-        <div className="section-header" style={{ textAlign: 'center' }}>
+        <div className="how-header">
           <h2>Como funciona o pedido?</h2>
           <p>O processo de compra é simples, humanizado e feito sob medida para você</p>
         </div>

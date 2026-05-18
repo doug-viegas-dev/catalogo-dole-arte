@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, MessageCircle, AlertCircle } from 'lucide-react';
 import type { Product, Category } from '../types';
 import { getWhatsappLink } from '../utils/whatsapp';
+import '../styles/Catalog.scss';
 
 interface CatalogProps {
   products: Product[];
@@ -36,7 +37,7 @@ export const Catalog: React.FC<CatalogProps> = ({
   return (
     <section id="catalogo" className="catalog">
       <div className="container">
-        <div className="section-header" style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <div className="catalog-header">
           <h2>Catálogo de Produtos</h2>
           <p>Escolha o produto ideal e envie sua ideia de personalização pelo WhatsApp</p>
         </div>
@@ -67,7 +68,7 @@ export const Catalog: React.FC<CatalogProps> = ({
 
         {filteredProducts.length === 0 ? (
           <div className="no-results">
-            <AlertCircle size={48} style={{ margin: '0 auto 16px', color: '#df842a' }} />
+            <AlertCircle size={48} className="no-results-icon" />
             <h3>Nenhum produto encontrado</h3>
             <p>Tente buscar por outro termo ou navegue por todas as categorias.</p>
           </div>
@@ -101,8 +102,7 @@ export const Catalog: React.FC<CatalogProps> = ({
                         href={whatsappLink} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="btn-whatsapp"
-                        style={{ padding: '10px 20px', fontSize: '0.95rem' }}
+                        className="btn-whatsapp btn-order-whatsapp"
                       >
                         <MessageCircle size={18} />
                         <span>Pedir no WhatsApp</span>
