@@ -97,7 +97,7 @@ export const INITIAL_SETTINGS: StoreSettings = {
   storeName: 'DoLe Arte',
   whatsappNumber: '5511999999999',
   instagramUrl: 'https://instagram.com/dole.arte',
-  heroTitle: 'Transforme sentimentos em',
+  heroTitle: 'Transforme momentos únicos em',
   heroSubtitle: 'Personalização com carinho, criatividade e cuidado em cada detalhe. O presente ideal feito sob medida para quem você ama.',
   aboutText: 'A DoLe Arte nasceu do desejo de transformar momentos e sentimentos especiais em peças únicas e eternas. Trabalhamos com matéria-prima de altíssima qualidade, estamparia digital de ponta e um carinho imenso em cada etapa do processo. Nosso objetivo é que cada cliente sinta a emoção de entregar (e receber) um presente feito exclusivamente para sua história.',
   contactEmail: 'contato@dolearte.com.br',
