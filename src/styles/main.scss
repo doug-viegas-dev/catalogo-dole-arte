@@ -1,0 +1,1283 @@
+// Variáveis de Cores baseadas no Logo da DoLe Arte
+$primary: #0d6864;      // Verde escuro / Teal do laço
+$secondary: #df842a;    // Laranja Caramelo / Dourado da caixa de presente
+$accent: #9f3d0a;       // Marrom / Canela das letras "DoLe Arte"
+$rose-light: #fdf5f7;   // Rosa bem suave e delicado
+$rose-accent: #e8a2b1;  // Rosa para detalhes
+$cream: #fcfaf7;        // Bege / Creme claro para fundos
+$gold: #d4af37;         // Dourado para destaques premium
+$text-main: #2b2b2b;    // Cinza escuro elegante
+$text-sub: #666666;     // Cinza suave para descrições
+$white: #ffffff;        // Branco puro
+$shadow-sm: 0 4px 12px rgba(13, 104, 100, 0.08);
+$shadow-md: 0 10px 25px rgba(223, 132, 42, 0.12);
+$shadow-lg: 0 20px 40px rgba(159, 61, 10, 0.15);
+$radius-md: 16px;
+$radius-lg: 24px;
+$radius-pill: 9999px;
+
+// Reset e Estilos Globais
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  color: $text-main;
+  background-color: $cream;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+h1, h2, h3, .logo-font {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+}
+
+.script-font {
+  font-family: 'Dancing Script', cursive;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+// Botões Padronizados
+.btn-primary {
+  background: linear-gradient(135deg, $primary, #158a85);
+  color: $white;
+  padding: 14px 28px;
+  border-radius: $radius-pill;
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(13, 104, 100, 0.3);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(13, 104, 100, 0.4);
+    background: linear-gradient(135deg, #158a85, $primary);
+  }
+}
+
+.btn-whatsapp {
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: $white;
+  padding: 14px 28px;
+  border-radius: $radius-pill;
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.3);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(37, 211, 102, 0.45);
+    background: linear-gradient(135deg, #28e16d, #149a8b);
+  }
+}
+
+.btn-secondary {
+  background: $white;
+  color: $secondary;
+  border: 2px solid $secondary;
+  padding: 12px 26px;
+  border-radius: $radius-pill;
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  
+  &:hover {
+    background: $secondary;
+    color: $white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(223, 132, 42, 0.25);
+  }
+}
+
+// Header Fixo
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  .nav-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 84px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: $rose-light;
+      border: 2px solid $secondary;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $primary;
+    }
+
+    .logo-text {
+      .title {
+        font-family: 'Dancing Script', cursive;
+        font-size: 2.2rem;
+        color: $accent;
+        line-height: 1;
+        font-weight: 700;
+      }
+      .subtitle {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: $secondary;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+
+    @media (max-width: 992px) {
+      display: none; // Esconde no mobile, acessível pelo menu hambúrguer
+    }
+
+    a {
+      font-weight: 500;
+      color: $text-main;
+      font-size: 1rem;
+      position: relative;
+      padding: 6px 0;
+
+      &:after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: $secondary;
+        transition: width 0.3s ease;
+      }
+
+      &:hover:after, &.active:after {
+        width: 100%;
+      }
+
+      &:hover {
+        color: $secondary;
+      }
+    }
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .admin-btn {
+      background: #f4f4f4;
+      color: $text-sub;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+
+      &:hover {
+        background: $primary;
+        color: $white;
+      }
+    }
+
+    .menu-toggle {
+      display: none;
+      background: none;
+      font-size: 1.8rem;
+      color: $primary;
+      @media (max-width: 992px) {
+        display: block;
+      }
+    }
+  }
+}
+
+// Menu Mobile Drawer
+.mobile-menu {
+  position: fixed;
+  top: 84px;
+  left: 0;
+  width: 100%;
+  background: $white;
+  padding: 30px 24px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  animation: slideDown 0.3s ease;
+
+  .mobile-links {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    list-style: none;
+    margin-bottom: 24px;
+
+    a {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: $text-main;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+  }
+}
+
+// Hero Section
+.hero {
+  padding: 160px 0 100px;
+  background: radial-gradient(circle at top right, $rose-light 0%, $cream 70%);
+  position: relative;
+
+  .hero-container {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 60px;
+    align-items: center;
+
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+  }
+
+  .tagline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(223, 132, 42, 0.12);
+    color: $secondary;
+    padding: 8px 18px;
+    border-radius: $radius-pill;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 24px;
+  }
+
+  h1 {
+    font-size: 3.6rem;
+    line-height: 1.15;
+    color: $primary;
+    margin-bottom: 24px;
+
+    @media (max-width: 768px) {
+      font-size: 2.5rem;
+    }
+
+    .highlight {
+      color: $accent;
+      font-family: 'Dancing Script', cursive;
+      font-size: 4.5rem;
+      font-weight: 700;
+      display: block;
+
+      @media (max-width: 768px) {
+        font-size: 3.5rem;
+      }
+    }
+  }
+
+  p {
+    font-size: 1.25rem;
+    color: $text-sub;
+    margin-bottom: 36px;
+    max-width: 580px;
+
+    @media (max-width: 992px) {
+      margin: 0 auto 36px;
+    }
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+
+    @media (max-width: 992px) {
+      justify-content: center;
+    }
+  }
+
+  .hero-image {
+    position: relative;
+
+    .img-main {
+      width: 100%;
+      height: 520px;
+      object-fit: cover;
+      border-radius: $radius-lg;
+      box-shadow: $shadow-lg;
+      border: 8px solid $white;
+    }
+
+    .floating-card {
+      position: absolute;
+      bottom: -20px;
+      left: -30px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      padding: 20px 24px;
+      border-radius: $radius-md;
+      box-shadow: $shadow-md;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid rgba(223, 132, 42, 0.2);
+
+      @media (max-width: 768px) {
+        left: 10px;
+        bottom: 10px;
+      }
+
+      .icon-box {
+        width: 50px;
+        height: 50px;
+        background: rgba(13, 104, 100, 0.1);
+        color: $primary;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .card-info {
+        text-align: left;
+        h4 {
+          font-size: 1.1rem;
+          color: $primary;
+          margin-bottom: 2px;
+        }
+        span {
+          font-size: 0.85rem;
+          color: $text-sub;
+        }
+      }
+    }
+  }
+}
+
+// Categorias Section
+.categories {
+  padding: 80px 0;
+  background: $white;
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 48px;
+
+    h2 {
+      font-size: 2.5rem;
+      color: $primary;
+      margin-bottom: 12px;
+    }
+
+    p {
+      color: $text-sub;
+      font-size: 1.1rem;
+    }
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+
+    .category-card {
+      background: $cream;
+      border: 1px solid rgba(223, 132, 42, 0.15);
+      padding: 32px 20px;
+      border-radius: $radius-md;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+
+      &:hover, &.active {
+        background: $primary;
+        color: $white;
+        transform: translateY(-5px);
+        box-shadow: $shadow-md;
+        border-color: $primary;
+
+        .cat-icon {
+          background: rgba(255, 255, 255, 0.2);
+          color: $secondary;
+        }
+
+        h3 {
+          color: $white;
+        }
+      }
+
+      .cat-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(13, 104, 100, 0.08);
+        color: $primary;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        transition: all 0.3s ease;
+        svg {
+          width: 32px;
+          height: 32px;
+        }
+      }
+
+      h3 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.15rem;
+        color: $text-main;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// Catálogo Section
+.catalog {
+  padding: 100px 0;
+  background: $cream;
+
+  .filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+
+    .search-input {
+      position: relative;
+      min-width: 300px;
+      @media (max-width: 768px) {
+        width: 100%;
+      }
+
+      input {
+        width: 100%;
+        padding: 14px 20px 14px 48px;
+        border-radius: $radius-pill;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        background: $white;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.3s;
+
+        &:focus {
+          border-color: $secondary;
+          box-shadow: 0 0 0 3px rgba(223, 132, 42, 0.15);
+        }
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $text-sub;
+      }
+    }
+
+    .category-tabs {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+
+      button {
+        padding: 10px 22px;
+        border-radius: $radius-pill;
+        background: $white;
+        color: $text-sub;
+        font-weight: 500;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        white-space: nowrap;
+
+        &:hover, &.active {
+          background: $secondary;
+          color: $white;
+          border-color: $secondary;
+        }
+      }
+    }
+  }
+
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 32px;
+
+    .product-card {
+      background: $white;
+      border-radius: $radius-lg;
+      overflow: hidden;
+      box-shadow: $shadow-sm;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(0, 0, 0, 0.04);
+
+      &:hover {
+        transform: translateY(-8px);
+        box-shadow: $shadow-md;
+      }
+
+      .img-wrapper {
+        position: relative;
+        height: 260px;
+        overflow: hidden;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.5s ease;
+        }
+
+        .badge {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(8px);
+          color: $primary;
+          font-weight: 600;
+          font-size: 0.8rem;
+          padding: 6px 14px;
+          border-radius: $radius-pill;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+      }
+
+      &:hover .img-wrapper img {
+        transform: scale(1.08);
+      }
+
+      .card-content {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+
+        h3 {
+          font-family: 'Outfit', sans-serif;
+          font-size: 1.3rem;
+          color: $primary;
+          margin-bottom: 10px;
+        }
+
+        .description {
+          color: $text-sub;
+          font-size: 0.95rem;
+          margin-bottom: 24px;
+          flex-grow: 1;
+        }
+
+        .card-footer {
+          border-top: 1px solid rgba(0,0,0,0.06);
+          padding-top: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+
+          .price-block {
+            .label {
+              font-size: 0.8rem;
+              color: $text-sub;
+              display: block;
+            }
+            .price {
+              font-size: 1.5rem;
+              font-weight: 700;
+              color: $secondary;
+            }
+          }
+
+          .btn-order {
+            background: $primary;
+            color: $white;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(13, 104, 100, 0.25);
+
+            &:hover {
+              background: $secondary;
+              transform: scale(1.1);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 60px 0;
+    color: $text-sub;
+    font-size: 1.2rem;
+  }
+}
+
+// Como Funciona Section
+.how-it-works {
+  padding: 100px 0;
+  background: radial-gradient(circle at center, $rose-light 0%, $white 100%);
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 32px;
+    margin-top: 56px;
+    position: relative;
+
+    .step-card {
+      background: $white;
+      padding: 40px 28px;
+      border-radius: $radius-lg;
+      box-shadow: $shadow-sm;
+      text-align: center;
+      position: relative;
+      border: 1px solid rgba(223, 132, 42, 0.1);
+
+      .step-number {
+        position: absolute;
+        top: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 44px;
+        height: 44px;
+        background: $secondary;
+        color: $white;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 15px rgba(223, 132, 42, 0.3);
+      }
+
+      .step-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(13, 104, 100, 0.08);
+        color: $primary;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 20px auto 24px;
+        svg {
+          width: 36px;
+          height: 36px;
+        }
+      }
+
+      h3 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+        color: $primary;
+      }
+
+      p {
+        color: $text-sub;
+        font-size: 0.95rem;
+      }
+    }
+  }
+}
+
+// Datas Especiais Section
+.special-dates {
+  padding: 100px 0;
+  background: $cream;
+
+  .dates-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+
+    .date-card {
+      position: relative;
+      height: 360px;
+      border-radius: $radius-lg;
+      overflow: hidden;
+      box-shadow: $shadow-md;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.6s ease;
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(13, 104, 100, 0.95) 0%, rgba(13, 104, 100, 0.4) 50%, rgba(0,0,0,0) 100%);
+        padding: 36px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        color: $white;
+
+        .date-tag {
+          background: $secondary;
+          color: $white;
+          padding: 6px 16px;
+          border-radius: $radius-pill;
+          font-size: 0.8rem;
+          font-weight: 600;
+          align-self: flex-start;
+          margin-bottom: 16px;
+        }
+
+        h3 {
+          font-family: 'Playfair Display', serif;
+          font-size: 1.8rem;
+          margin-bottom: 8px;
+        }
+
+        p {
+          color: rgba(255, 255, 255, 0.85);
+          font-size: 0.95rem;
+        }
+      }
+
+      &:hover img {
+        transform: scale(1.1);
+      }
+    }
+  }
+}
+
+// Sobre a Loja
+.about {
+  padding: 120px 0;
+  background: $white;
+
+  .about-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .about-images {
+    position: relative;
+
+    .img-1 {
+      width: 85%;
+      height: 460px;
+      object-fit: cover;
+      border-radius: $radius-lg;
+      box-shadow: $shadow-lg;
+    }
+
+    .badge-box {
+      position: absolute;
+      bottom: 20px;
+      right: 0;
+      background: $secondary;
+      color: $white;
+      padding: 30px;
+      border-radius: $radius-md;
+      box-shadow: $shadow-md;
+      text-align: center;
+      max-width: 220px;
+
+      h4 {
+        font-family: 'Dancing Script', cursive;
+        font-size: 2.5rem;
+        margin-bottom: 4px;
+        line-height: 1;
+      }
+      p {
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+    }
+  }
+
+  .about-content {
+    h2 {
+      font-size: 2.8rem;
+      color: $primary;
+      margin-bottom: 24px;
+    }
+
+    .lead {
+      font-size: 1.25rem;
+      color: $accent;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+
+    p {
+      color: $text-sub;
+      margin-bottom: 32px;
+      font-size: 1.05rem;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+
+      .feat-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+
+        .feat-icon {
+          width: 48px;
+          height: 48px;
+          background: rgba(223, 132, 42, 0.15);
+          color: $secondary;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        span {
+          font-weight: 600;
+          color: $text-main;
+        }
+      }
+    }
+  }
+}
+
+// Contato Section
+.contact {
+  padding: 100px 0;
+  background: radial-gradient(circle at bottom, $rose-light 0%, $cream 100%);
+  text-align: center;
+
+  .contact-box {
+    max-width: 800px;
+    margin: 0 auto;
+    background: $white;
+    padding: 64px 40px;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-lg;
+    border: 1px solid rgba(223, 132, 42, 0.2);
+
+    h2 {
+      font-size: 2.8rem;
+      color: $primary;
+      margin-bottom: 16px;
+    }
+
+    p {
+      color: $text-sub;
+      font-size: 1.15rem;
+      margin-bottom: 40px;
+    }
+
+    .contact-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+
+      .btn-instagram {
+        background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
+        color: $white;
+        padding: 14px 32px;
+        border-radius: $radius-pill;
+        font-weight: 600;
+        font-size: 1rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 6px 20px rgba(220, 39, 67, 0.3);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 25px rgba(220, 39, 67, 0.45);
+        }
+      }
+    }
+
+    .contact-info {
+      display: flex;
+      justify-content: center;
+      gap: 48px;
+      flex-wrap: wrap;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      padding-top: 36px;
+
+      .info-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: $text-sub;
+        font-size: 0.95rem;
+
+        svg {
+          color: $secondary;
+        }
+      }
+    }
+  }
+}
+
+// Rodapé
+.footer {
+  background: $primary;
+  color: $white;
+  padding: 80px 0 40px;
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 60px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .footer-brand {
+      .logo-footer {
+        font-family: 'Dancing Script', cursive;
+        font-size: 2.8rem;
+        color: $secondary;
+        margin-bottom: 16px;
+      }
+      p {
+        color: rgba(255, 255, 255, 0.8);
+        max-width: 380px;
+      }
+    }
+
+    h4 {
+      font-size: 1.2rem;
+      color: $secondary;
+      margin-bottom: 24px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      a {
+        color: rgba(255, 255, 255, 0.8);
+        transition: color 0.2s;
+
+        &:hover {
+          color: $secondary;
+        }
+      }
+    }
+  }
+
+  .footer-bottom {
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+
+    .heart {
+      color: #ff5252;
+    }
+  }
+}
+
+// Modal e Painel Admin
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 24px;
+}
+
+.admin-modal {
+  background: $white;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: scaleUp 0.3s ease;
+
+  .admin-header {
+    background: $primary;
+    color: $white;
+    padding: 24px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .close-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: $white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      &:hover {
+        background: $secondary;
+      }
+    }
+  }
+
+  .admin-body {
+    padding: 32px;
+    overflow-y: auto;
+    flex-grow: 1;
+
+    .auth-box {
+      max-width: 400px;
+      margin: 60px auto;
+      text-align: center;
+
+      h4 {
+        font-size: 1.5rem;
+        color: $primary;
+        margin-bottom: 12px;
+      }
+      p {
+        color: $text-sub;
+        margin-bottom: 24px;
+      }
+      input {
+        width: 100%;
+        padding: 14px 20px;
+        border-radius: $radius-pill;
+        border: 2px solid rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        font-size: 1rem;
+        outline: none;
+
+        &:focus {
+          border-color: $primary;
+        }
+      }
+    }
+  }
+
+  .tabs-nav {
+    display: flex;
+    gap: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    margin-bottom: 28px;
+
+    button {
+      padding: 12px 24px;
+      background: none;
+      color: $text-sub;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+
+      &.active, &:hover {
+        color: $primary;
+        border-bottom-color: $primary;
+      }
+    }
+  }
+
+  .admin-actions-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .products-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    th {
+      font-weight: 600;
+      color: $primary;
+      background: rgba(13, 104, 100, 0.05);
+    }
+
+    .prod-img-cell {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 10px;
+
+      button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+      }
+
+      .btn-edit {
+        background: rgba(223, 132, 42, 0.15);
+        color: $secondary;
+        &:hover { background: $secondary; color: $white; }
+      }
+
+      .btn-del {
+        background: rgba(255, 82, 82, 0.15);
+        color: #ff5252;
+        &:hover { background: #ff5252; color: $white; }
+      }
+    }
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        font-weight: 600;
+        color: $text-main;
+        font-size: 0.95rem;
+      }
+
+      input, textarea, select {
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,0,0,0.15);
+        font-family: 'Outfit', sans-serif;
+        font-size: 1rem;
+        outline: none;
+
+        &:focus {
+          border-color: $primary;
+        }
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+    }
+  }
+}
+
+// Animações
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
