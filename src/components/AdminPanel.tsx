@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Save, CheckCircle, Database, AlertTriangle, ArrowLeft, Upload, Image as ImageIcon, LogOut, Sparkles, Coffee, LayoutGrid, Shirt, Gift, Heart } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Edit, Trash2, Save, CheckCircle, Database, AlertTriangle, ArrowLeft, Upload, Image as ImageIcon, LogOut, X, Search } from 'lucide-react';
 import type { Product, StoreSettings, Category } from '../types';
 import { firebaseService } from '../services/firebase';
 import { convertToWebP } from '../utils/image';
+import { CATEGORY_ICON_OPTIONS, renderCategoryIcon } from '../utils/categoryIcons';
 import '../styles/AdminPanel.scss';
 
 interface AdminPanelProps {
@@ -29,34 +30,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [loadingAuth, setLoadingAuth] = useState(false);
-
-  const renderCategoryIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'Coffee': return <Coffee size={24} />;
-      case 'LayoutGrid': return <LayoutGrid size={24} />;
-      case 'Shirt': return <Shirt size={24} />;
-      case 'Gift': return <Gift size={24} />;
-      case 'Heart': return <Heart size={24} />;
-      default: return <Sparkles size={24} />;
-    }
-  };
-
-  useEffect(() => {
-    const unsubscribe = firebaseService.onAuthStateChanged((user) => {
-      if (user) {
-        setIsAuthenticated(true);
-        setEmailInput(user.email || '');
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
   const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'settings'>('products');
   
   // Estado para Produtos
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isAddingNewProduct, setIsAddingNewProduct] = useState(false);
   const [imgUploading, setImgUploading] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
+  const [productCategoryFilter, setProductCategoryFilter] = useState('all');
+  const [productStockFilter, setProductStockFilter] = useState('all');
 
   // Estado para Categorias
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -66,9 +48,49 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [localSettings, setLocalSettings] = useState<StoreSettings>({ ...settings });
   const [saveSuccess, setSaveSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [showRulesModal, setShowRulesModal] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = firebaseService.onAuthStateChanged((user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        setCurrentUserEmail(user.email);
+        setEmailInput(user.email || '');
+      } else {
+        setCurrentUserEmail(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const filteredProducts = useMemo(() => {
+    const search = productSearch.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const matchesSearch =
+        !search ||
+        product.name.toLowerCase().includes(search) ||
+        product.description.toLowerCase().includes(search);
+      const matchesCategory = productCategoryFilter === 'all' || product.category === productCategoryFilter;
+      const matchesStock =
+        productStockFilter === 'all' ||
+        (productStockFilter === 'available' && product.inStock) ||
+        (productStockFilter === 'out' && !product.inStock);
+
+      return matchesSearch && matchesCategory && matchesStock;
+    });
+  }, [products, productSearch, productCategoryFilter, productStockFilter]);
+
+  const handleClearProductFilters = () => {
+    setProductSearch('');
+    setProductCategoryFilter('all');
+    setProductStockFilter('all');
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setAuthError('');
     setLoadingAuth(true);
 
@@ -120,19 +142,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // Upload e Conversão de Imagem para WebP
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !editingProduct) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !editingProduct) return;
 
     setImgUploading(true);
     try {
-      const webpDataUrl = await convertToWebP(file, 1000, 0.85);
-      setEditingProduct({ ...editingProduct, imageUrl: webpDataUrl });
+      const convertedImages = await Promise.all(files.map((file) => convertToWebP(file, 1000, 0.85)));
+      const imageUrls = [...(editingProduct.imageUrls || (editingProduct.imageUrl ? [editingProduct.imageUrl] : [])), ...convertedImages];
+      setEditingProduct({ ...editingProduct, imageUrl: imageUrls[0] || '', imageUrls });
     } catch (err) {
       console.error(err);
-      alert('Erro ao converter imagem para WebP.');
+      alert('Erro ao converter uma ou mais imagens para WebP.');
     } finally {
       setImgUploading(false);
+      e.target.value = '';
     }
+  };
+
+  const handleRemoveProductImage = (imageUrl: string) => {
+    if (!editingProduct) return;
+    const imageUrls = (editingProduct.imageUrls || [editingProduct.imageUrl]).filter((url) => url && url !== imageUrl);
+    setEditingProduct({ ...editingProduct, imageUrls, imageUrl: imageUrls[0] || '' });
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -141,13 +171,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     setLoading(true);
     try {
-      await firebaseService.saveProductToFirebase(editingProduct);
+      const productToSave = {
+        ...editingProduct,
+        imageUrls: editingProduct.imageUrls?.length ? editingProduct.imageUrls : (editingProduct.imageUrl ? [editingProduct.imageUrl] : []),
+      };
+      productToSave.imageUrl = productToSave.imageUrls[0] || '';
+
+      await firebaseService.saveProductToFirebase(productToSave);
       
       let updatedList = [...products];
       if (isAddingNewProduct) {
-        updatedList.push(editingProduct);
+        updatedList.push(productToSave);
       } else {
-        updatedList = updatedList.map(p => p.id === editingProduct.id ? editingProduct : p);
+        updatedList = updatedList.map(p => p.id === productToSave.id ? productToSave : p);
       }
 
       onUpdateProducts(updatedList);
@@ -180,8 +216,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       name: '',
       description: '',
       price: 0,
-      category: categories[1]?.id || 'canecas',
+      category: categories.find(c => c.id !== 'todas')?.id || '',
       imageUrl: '',
+      imageUrls: [],
       inStock: true,
       featured: false,
     });
@@ -371,6 +408,69 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
             )}
 
+            {firebaseService.isConfigured() && (
+              <div className="admin-db-actions-banner">
+                <div className="db-info">
+                  <Database size={28} className="icon-pulse" />
+                  <div>
+                    <h4>Banco de Dados na Nuvem (Firestore)</h4>
+                    <p>
+                      {currentUserEmail 
+                        ? `Conectado na nuvem como: ${currentUserEmail}. Produtos, categorias e configuracoes sao lidos do Firestore.` 
+                        : 'Atencao: voce fez login local. Se o Firebase rejeitar a gravacao, verifique suas Regras de Seguranca no console.'}
+                    </p>
+                    <button onClick={() => setShowRulesModal(true)} className="btn-link-rules">
+                      🔑 Como configurar as Permissões do Firestore?
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {showRulesModal && (
+              <div className="rules-help-box">
+                <div className="rules-header">
+                  <h4>🛡️ Regras de Segurança Profissionais para o Firebase Firestore</h4>
+                  <button onClick={() => setShowRulesModal(false)} className="btn-close-rules">✕</button>
+                </div>
+                <p>
+                  O Firebase emite um alerta se você deixar o banco aberto para todos. A configuração ideal e <strong>100% segura para produção</strong> garante que qualquer cliente possa ver os produtos, mas <strong>apenas você (administrador logado)</strong> possa gravar ou alterar o catálogo:
+                </p>
+                <ol>
+                  <li>Acesse seu projeto <strong>catalogo-dole-arte</strong> no console do Firebase.</li>
+                  <li>No menu lateral, clique em <strong>Firestore Database</strong> e depois na aba <strong>Regras (Rules)</strong>.</li>
+                  <li>Substitua todo o texto da caixa por estas regras seguras:</li>
+                </ol>
+                <pre className="rules-code">
+{`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      // Clientes podem visualizar o catálogo livremente
+      allow read: if true;
+      // Apenas administradores autenticados podem gravar, editar ou deletar
+      allow write: if request.auth != null;
+    }
+  }
+}`}
+                </pre>
+                <button 
+                  onClick={() => {
+                    const safeRules = "rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read: if true;\n      allow write: if request.auth != null;\n    }\n  }\n}";
+                    navigator.clipboard.writeText(safeRules);
+                    alert("Regras seguras copiadas com sucesso! Cole no console do Firestore e clique em Publicar.");
+                  }} 
+                  className="btn-copy-rules"
+                >
+                  📋 Copiar Regras Seguras para a Área de Transferência
+                </button>
+                <p className="rules-note">
+                  <strong>Dica de Segurança:</strong> Com essas regras ativas, qualquer pessoa pode visualizar o catalogo e apenas administradores autenticados podem alterar produtos, categorias e configuracoes.
+                </p>
+              </div>
+            )}
+
+
             {/* ABA: PRODUTOS */}
             {activeTab === 'products' && !editingProduct && (
               <>
@@ -381,48 +481,95 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </button>
                 </div>
 
+                <div className="admin-product-filters">
+                  <div className="admin-product-search">
+                    <Search size={18} />
+                    <input
+                      type="search"
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder="Buscar produto..."
+                    />
+                  </div>
+
+                  <select
+                    value={productCategoryFilter}
+                    onChange={(e) => setProductCategoryFilter(e.target.value)}
+                    aria-label="Filtrar por categoria"
+                  >
+                    <option value="all">Todas as categorias</option>
+                    {categories.filter((cat) => cat.id !== 'todas').map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={productStockFilter}
+                    onChange={(e) => setProductStockFilter(e.target.value)}
+                    aria-label="Filtrar por estoque"
+                  >
+                    <option value="all">Todos os status</option>
+                    <option value="available">Disponíveis</option>
+                    <option value="out">Esgotados</option>
+                  </select>
+
+                  <button type="button" className="btn-clear-filters" onClick={handleClearProductFilters}>
+                    Limpar
+                  </button>
+                </div>
+
+                <div className="admin-results-count">
+                  {filteredProducts.length} de {products.length} produtos
+                </div>
+
                 <div className="admin-table-container">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>Imagem</th>
-                        <th>Nome do Produto</th>
-                        <th>Categoria</th>
-                        <th>Preço Inicial</th>
-                        <th>Estoque</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {products.map((prod) => (
-                        <tr key={prod.id}>
-                          <td>
-                            <img src={prod.imageUrl} alt={prod.name} className="table-img" />
-                          </td>
-                          <td className="cell-bold">{prod.name}</td>
-                          <td className="cell-category">
-                            {categories.find(c => c.id === prod.category)?.name || prod.category}
-                          </td>
-                          <td className="cell-price">R$ {prod.price.toFixed(2)}</td>
-                          <td>
-                            <span className={`stock-badge ${prod.inStock ? 'available' : 'out'}`}>
-                              {prod.inStock ? 'Disponível' : 'Esgotado'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="actions-cell">
-                              <button onClick={() => setEditingProduct(prod)} className="btn-edit">
-                                <Edit size={16} /> Editar
-                              </button>
-                              <button onClick={() => handleDeleteProduct(prod.id)} className="btn-delete">
-                                <Trash2 size={16} /> Excluir
-                              </button>
-                            </div>
-                          </td>
+                  {filteredProducts.length === 0 ? (
+                    <div className="admin-empty-state">
+                      Nenhum produto encontrado com os filtros atuais.
+                    </div>
+                  ) : (
+                    <table className="admin-table">
+                      <thead>
+                        <tr>
+                          <th>Imagem</th>
+                          <th>Nome do Produto</th>
+                          <th>Categoria</th>
+                          <th>Preço Inicial</th>
+                          <th>Estoque</th>
+                          <th>Ações</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {filteredProducts.map((prod) => (
+                          <tr key={prod.id}>
+                            <td data-label="Imagem">
+                              <img src={prod.imageUrl} alt={prod.name} className="table-img" />
+                            </td>
+                            <td data-label="Produto" className="cell-bold">{prod.name}</td>
+                            <td data-label="Categoria" className="cell-category">
+                              {categories.find(c => c.id === prod.category)?.name || prod.category}
+                            </td>
+                            <td data-label="Preco" className="cell-price">R$ {prod.price.toFixed(2)}</td>
+                            <td data-label="Estoque">
+                              <span className={`stock-badge ${prod.inStock ? 'available' : 'out'}`}>
+                                {prod.inStock ? 'Disponível' : 'Esgotado'}
+                              </span>
+                            </td>
+                            <td data-label="Acoes">
+                              <div className="actions-cell">
+                                <button onClick={() => setEditingProduct(prod)} className="btn-edit">
+                                  <Edit size={16} /> Editar
+                                </button>
+                                <button onClick={() => handleDeleteProduct(prod.id)} className="btn-delete">
+                                  <Trash2 size={16} /> Excluir
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </>
             )}
@@ -481,6 +628,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
                       className="form-control"
                     >
+                      {categories.filter(c => c.id !== 'todas').length === 0 && (
+                        <option value="">Cadastre uma categoria primeiro</option>
+                      )}
                       {categories.filter(c => c.id !== 'todas').map(cat => (
                         <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
@@ -499,22 +649,27 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
                     <div className="upload-actions">
                       <label className="btn-choose">
-                        <ImageIcon size={20} /> Escolher Arquivo...
-                        <input type="file" accept="image/*" onChange={handleImageFileChange} className="hidden-input" />
+                        <ImageIcon size={20} /> Escolher Fotos...
+                        <input type="file" accept="image/*" multiple onChange={handleImageFileChange} className="hidden-input" />
                       </label>
 
                       {imgUploading && <span className="converting-msg">Convertendo imagem para WebP... ⏳</span>}
                     </div>
 
-                    {editingProduct.imageUrl && (
-                      <div className="preview-box">
-                        <img src={editingProduct.imageUrl} alt="Prévia" className="img-preview" />
-                        <div className="preview-info">
-                          <span className="ready-title">✓ Imagem pronta no formato WebP</span>
-                          <span className="url-text">{editingProduct.imageUrl.substring(0, 60)}...</span>
-                        </div>
+                    {(editingProduct.imageUrls?.length || editingProduct.imageUrl) && (
+                      <div className="preview-grid">
+                        {(editingProduct.imageUrls?.length ? editingProduct.imageUrls : [editingProduct.imageUrl]).map((imageUrl, index) => (
+                          <div className="preview-card" key={`${imageUrl}-${index}`}>
+                            <img src={imageUrl} alt={`Previa ${index + 1}`} className="img-preview" />
+                            <button type="button" className="btn-remove-image" onClick={() => handleRemoveProductImage(imageUrl)} aria-label="Remover foto">
+                              <X size={14} />
+                            </button>
+                            {index === 0 && <span className="main-image-badge">Principal</span>}
+                          </div>
+                        ))}
                       </div>
                     )}
+
                   </div>
 
                   <div className="form-group">
@@ -572,13 +727,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <tbody>
                       {categories.map((cat) => (
                         <tr key={cat.id}>
-                          <td className="cell-icon-col">
-                            {renderCategoryIcon(cat.icon)}
+                          <td data-label="Icone" className="cell-icon-col">
+                            {renderCategoryIcon(cat.icon, 24)}
                           </td>
-                          <td className="cell-bold">
+                          <td data-label="Categoria" className="cell-bold">
                             {cat.name} {cat.id === 'todas' && <span className="cat-fixed-badge">(Fixo)</span>}
                           </td>
-                          <td>
+                          <td data-label="Acoes">
                             {cat.id !== 'todas' && (
                               <div className="actions-cell">
                                 <button onClick={() => setEditingCategory(cat)} className="btn-edit">
@@ -636,6 +791,20 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <option value="Gift">🎁 Gift (Kits Presente)</option>
                       <option value="Heart">❤️ Heart (Lembrancinhas / Romântico)</option>
                     </select>
+                    <div className="icon-picker" role="radiogroup" aria-label="Icone da categoria">
+                      {CATEGORY_ICON_OPTIONS.map((option) => (
+                        <button
+                          key={option.name}
+                          type="button"
+                          className={`icon-option ${editingCategory.icon === option.name ? 'active' : ''}`}
+                          onClick={() => setEditingCategory({ ...editingCategory, icon: option.name })}
+                          aria-pressed={editingCategory.icon === option.name}
+                        >
+                          {renderCategoryIcon(option.name, 22)}
+                          <span>{option.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="form-submit-row">

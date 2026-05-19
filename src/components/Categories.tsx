@@ -1,6 +1,6 @@
 import React from 'react';
-import { Sparkles, Coffee, LayoutGrid, Shirt, Gift, Heart } from 'lucide-react';
 import type { Category } from '../types';
+import { renderCategoryIcon } from '../utils/categoryIcons';
 import '../styles/Categories.scss';
 
 interface CategoriesProps {
@@ -10,17 +10,6 @@ interface CategoriesProps {
 }
 
 export const Categories: React.FC<CategoriesProps> = ({ categories, activeCategory, onSelectCategory }) => {
-  const getIcon = (iconName: string) => {
-    switch (iconName) {
-      case 'Coffee': return <Coffee />;
-      case 'LayoutGrid': return <LayoutGrid />;
-      case 'Shirt': return <Shirt />;
-      case 'Gift': return <Gift />;
-      case 'Heart': return <Heart />;
-      default: return <Sparkles />;
-    }
-  };
-
   const handleClick = (id: string) => {
     onSelectCategory(id);
     const el = document.getElementById('catalogo');
@@ -43,7 +32,7 @@ export const Categories: React.FC<CategoriesProps> = ({ categories, activeCatego
               onClick={() => handleClick(cat.id)}
             >
               <div className="cat-icon">
-                {getIcon(cat.icon)}
+                {renderCategoryIcon(cat.icon, 32)}
               </div>
               <h3>{cat.name}</h3>
             </div>

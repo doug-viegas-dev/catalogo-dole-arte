@@ -130,7 +130,7 @@ export const App: React.FC = () => {
 
         <HowItWorks />
 
-        <SpecialDates items={SPECIAL_DATES} />
+        {SPECIAL_DATES.length > 0 && <SpecialDates items={SPECIAL_DATES} />}
 
         <About settings={settings} />
 

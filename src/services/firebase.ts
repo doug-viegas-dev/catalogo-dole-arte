@@ -1,11 +1,10 @@
-// Serviço de integração com o Firebase
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import type { Firestore } from 'firebase/firestore';
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import type { Auth, User } from 'firebase/auth';
 import type { Product, StoreSettings, Category } from '../types';
-import { storeService, INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_SETTINGS } from './store';
+import { storeService } from './store';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAm1JpltYryh4aJsnZyrqEe1vgmPig3Ras",
@@ -35,6 +34,11 @@ try {
   console.error('Erro ao inicializar Firebase:', e);
 }
 
+const normalizeProductImages = (product: Product): Product => ({
+  ...product,
+  imageUrls: product.imageUrls?.length ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []),
+});
+
 export const firebaseService = {
   isConfigured() {
     return isFirebaseConfigured;
@@ -45,12 +49,12 @@ export const firebaseService = {
   },
 
   async loginAdmin(email: string, pass: string): Promise<void> {
-    if (!auth) throw new Error('Firebase Auth não configurado ou offline.');
+    if (!auth) throw new Error('Firebase Auth nao configurado ou offline.');
     await signInWithEmailAndPassword(auth, email, pass);
   },
 
   async loginWithGoogle(): Promise<void> {
-    if (!auth) throw new Error('Firebase Auth não configurado ou offline.');
+    if (!auth) throw new Error('Firebase Auth nao configurado ou offline.');
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
   },
@@ -65,76 +69,34 @@ export const firebaseService = {
     return onAuthStateChanged(auth, callback);
   },
 
-  async seedInitialDataIfEmpty(forceProducts = false): Promise<void> {
-    if (!isFirebaseConfigured || !db) return;
-    try {
-      // 1. Povoar Produtos se vazio ou se forçado
-      const prodSnap = await getDocs(collection(db, 'products'));
-      if (prodSnap.empty || forceProducts) {
-        console.log('Povoando Firestore com imagens e produtos iniciais...');
-        for (const prod of INITIAL_PRODUCTS) {
-          await setDoc(doc(db, 'products', prod.id), prod);
-        }
-      }
-
-      // 2. Povoar Categorias se vazio
-      const catSnap = await getDocs(collection(db, 'categories'));
-      if (catSnap.empty) {
-        console.log('Coleção categories vazia. Povoando com categorias iniciais...');
-        for (const cat of INITIAL_CATEGORIES) {
-          await setDoc(doc(db, 'categories', cat.id), cat);
-        }
-      }
-
-      // 3. Povoar Configurações se vazio
-      const setSnap = await getDocs(collection(db, 'settings'));
-      if (setSnap.empty) {
-        console.log('Coleção settings vazia. Povoando com configurações iniciais...');
-        await setDoc(doc(db, 'settings', 'general'), INITIAL_SETTINGS);
-      }
-    } catch (e) {
-      console.error('Erro ao realizar o seeding no Firestore:', e);
-    }
-  },
-
   async syncProductsFromFirebase(): Promise<Product[]> {
-    if (!isFirebaseConfigured || !db) return storeService.getProducts();
+    if (!isFirebaseConfigured || !db) return storeService.getProducts().map(normalizeProductImages);
     try {
-      await this.seedInitialDataIfEmpty();
-
       const querySnapshot = await getDocs(collection(db, 'products'));
-      let products: Product[] = [];
-      querySnapshot.forEach((doc) => {
-        products.push({ id: doc.id, ...doc.data() } as Product);
+      const products: Product[] = [];
+      querySnapshot.forEach((docSnap) => {
+        products.push(normalizeProductImages({ id: docSnap.id, ...docSnap.data() } as Product));
       });
-
-      // Se houver imagens antigas do unsplash, força a atualização para as imagens locais premium
-      if (products.some(p => p.imageUrl?.includes('unsplash.com'))) {
-        await this.seedInitialDataIfEmpty(true);
-        products = [...INITIAL_PRODUCTS];
-      }
-
-      if (products.length > 0) {
-        storeService.saveProducts(products);
-        return products;
-      }
+      storeService.saveProducts(products);
+      return products;
     } catch (e) {
       console.error('Erro ao buscar produtos do Firestore:', e);
     }
-    return storeService.getProducts();
+    return storeService.getProducts().map(normalizeProductImages);
   },
 
   async saveProductToFirebase(product: Product): Promise<void> {
+    const normalizedProduct = normalizeProductImages(product);
     const current = storeService.getProducts();
-    const updated = current.map(p => p.id === product.id ? product : p);
-    if (!current.some(p => p.id === product.id)) updated.push(product);
+    const updated = current.map(p => p.id === normalizedProduct.id ? normalizedProduct : p);
+    if (!current.some(p => p.id === normalizedProduct.id)) updated.push(normalizedProduct);
     storeService.saveProducts(updated);
 
     if (isFirebaseConfigured && db) {
       try {
-        await setDoc(doc(db, 'products', product.id), product);
+        await setDoc(doc(db, 'products', normalizedProduct.id), normalizedProduct);
       } catch {
-        console.warn('Erro ao salvar no Firestore (verifique as Regras de Segurança no console do Firebase). Produto salvo localmente.');
+        console.warn('Erro ao salvar no Firestore. Produto salvo localmente.');
       }
     }
   },
@@ -147,7 +109,7 @@ export const firebaseService = {
       try {
         await deleteDoc(doc(db, 'products', id));
       } catch {
-        console.warn('Erro ao deletar no Firestore. Produto excluído localmente.');
+        console.warn('Erro ao deletar no Firestore. Produto excluido localmente.');
       }
     }
   },
@@ -157,13 +119,11 @@ export const firebaseService = {
     try {
       const querySnapshot = await getDocs(collection(db, 'categories'));
       const categories: Category[] = [];
-      querySnapshot.forEach((doc) => {
-        categories.push({ id: doc.id, ...doc.data() } as Category);
+      querySnapshot.forEach((docSnap) => {
+        categories.push({ id: docSnap.id, ...docSnap.data() } as Category);
       });
-      if (categories.length > 0) {
-        storeService.saveCategories(categories);
-        return categories;
-      }
+      storeService.saveCategories(categories);
+      return categories;
     } catch (e) {
       console.error('Erro ao buscar categorias:', e);
     }
@@ -193,7 +153,7 @@ export const firebaseService = {
       try {
         await deleteDoc(doc(db, 'categories', id));
       } catch {
-        console.warn('Erro ao excluir categoria no Firestore. Excluído localmente.');
+        console.warn('Erro ao excluir categoria no Firestore. Excluido localmente.');
       }
     }
   },
@@ -202,17 +162,16 @@ export const firebaseService = {
     if (!isFirebaseConfigured || !db) return storeService.getSettings();
     try {
       const querySnapshot = await getDocs(collection(db, 'settings'));
-      let settings: Partial<StoreSettings> = {};
-      querySnapshot.forEach((doc) => {
-        if (doc.id === 'general') settings = doc.data() as StoreSettings;
+      let settings: StoreSettings | null = null;
+      querySnapshot.forEach((docSnap) => {
+        if (docSnap.id === 'general') settings = docSnap.data() as StoreSettings;
       });
-      if (Object.keys(settings).length > 0) {
-        const fullSettings = { ...storeService.getSettings(), ...settings };
-        storeService.saveSettings(fullSettings);
-        return fullSettings;
+      if (settings) {
+        storeService.saveSettings(settings);
+        return settings;
       }
     } catch (e) {
-      console.error('Erro ao buscar configurações:', e);
+      console.error('Erro ao buscar configuracoes:', e);
     }
     return storeService.getSettings();
   },
@@ -224,8 +183,8 @@ export const firebaseService = {
       try {
         await setDoc(doc(db, 'settings', 'general'), settings);
       } catch (e) {
-        console.warn('Erro ao salvar configurações no Firestore (verifique regras de segurança). Salvo localmente.', e);
+        console.warn('Erro ao salvar configuracoes no Firestore. Salvo localmente.', e);
       }
     }
-  }
+  },
 };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, MessageCircle, AlertCircle } from 'lucide-react';
 import type { Product, Category } from '../types';
 import { getWhatsappLink } from '../utils/whatsapp';
@@ -11,6 +11,41 @@ interface CatalogProps {
   selectedCategory: string;
   onSelectCategory: (catId: string) => void;
 }
+
+const ProductImageCarousel: React.FC<{ product: Product }> = ({ product }) => {
+  const images = product.imageUrls?.length ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const displayIndex = images.length ? activeIndex % images.length : 0;
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const interval = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % images.length);
+    }, 3000);
+    return () => window.clearInterval(interval);
+  }, [images.length, product.id]);
+
+  return (
+    <>
+      {images.map((imageUrl, index) => (
+        <img
+          key={`${imageUrl}-${index}`}
+          src={imageUrl}
+          alt={product.name}
+          loading="lazy"
+          className={index === displayIndex ? 'active' : ''}
+        />
+      ))}
+      {images.length > 1 && (
+        <div className="carousel-dots" aria-hidden="true">
+          {images.map((_, index) => (
+            <span key={index} className={index === displayIndex ? 'active' : ''} />
+          ))}
+        </div>
+      )}
+    </>
+  );
+};
 
 export const Catalog: React.FC<CatalogProps> = ({ 
   products, 
@@ -79,7 +114,7 @@ export const Catalog: React.FC<CatalogProps> = ({
               return (
                 <div key={product.id} className="product-card">
                   <div className="img-wrapper">
-                    <img src={product.imageUrl} alt={product.name} loading="lazy" />
+                    <ProductImageCarousel product={product} />
                     {product.minQuantity && (
                       <span className="badge">Min. {product.minQuantity} un.</span>
                     )}
