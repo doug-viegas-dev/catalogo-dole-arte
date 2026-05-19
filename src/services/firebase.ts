@@ -2,13 +2,11 @@ import { initializeApp } from 'firebase/app';
 import {
   browserSessionPersistence,
   getAuth,
-  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signInWithRedirect,
   signOut,
 } from 'firebase/auth';
 import type { Auth, User } from 'firebase/auth';
@@ -158,8 +156,7 @@ export const firebaseService = {
   async getGoogleRedirectUser(): Promise<User | null> {
     if (!auth) return null;
     await authPersistenceReady;
-    const result = await getRedirectResult(auth);
-    return result?.user || auth.currentUser;
+    return auth.currentUser;
   },
 
   async logoutAdmin(): Promise<void> {
