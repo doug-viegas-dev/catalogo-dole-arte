@@ -7,6 +7,7 @@ import {
   onAuthStateChanged,
   setPersistence,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signInWithRedirect,
   signOut,
 } from 'firebase/auth';
@@ -151,7 +152,7 @@ export const firebaseService = {
     if (!auth) throw new Error(firebaseInitError || 'Autenticacao indisponivel.');
     await authPersistenceReady;
     const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    await signInWithPopup(auth, provider);
   },
 
   async getGoogleRedirectUser(): Promise<User | null> {
