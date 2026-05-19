@@ -38,6 +38,7 @@ const createProduct = (categories: Category[]): Product => ({
   imageUrls: [],
   inStock: true,
   featured: false,
+  requiresMinQuantity: false,
 });
 
 const createCategory = (): Category => ({
@@ -288,6 +289,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     setLoading(true);
     try {
+      if (editingProduct.requiresMinQuantity && (!editingProduct.minQuantity || editingProduct.minQuantity < 1)) {
+        showError('Informe a quantidade minima por pedido.');
+        return;
+      }
+
       const imageUrls = editingProduct.imageUrls?.length ? editingProduct.imageUrls : (editingProduct.imageUrl ? [editingProduct.imageUrl] : []);
       const productToSave = { ...editingProduct, imageUrl: imageUrls[0] || '', imageUrls };
       await adminService.saveProduct(productToSave);

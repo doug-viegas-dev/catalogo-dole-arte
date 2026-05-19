@@ -536,6 +536,25 @@
       textarea.form-control {
         resize: vertical;
       }
+
+      .checkbox-control {
+        min-height: 52px;
+        padding: 14px 16px;
+        border: 1px solid #ccc;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: $text-main;
+        font-weight: 600;
+        cursor: pointer;
+
+        input {
+          width: 18px;
+          height: 18px;
+          accent-color: $primary;
+        }
+      }
     }
   }
 

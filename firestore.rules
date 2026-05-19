@@ -25,6 +25,7 @@ service cloud.firestore {
         'imageUrls',
         'inStock',
         'featured',
+        'requiresMinQuantity',
         'minQuantity'
       ])
       && request.resource.data.id == productId
@@ -38,7 +39,16 @@ service cloud.firestore {
       && request.resource.data.imageUrls.size() <= 12
       && request.resource.data.inStock is bool
       && request.resource.data.featured is bool
-      && (request.resource.data.minQuantity == null || request.resource.data.minQuantity is number);
+      && request.resource.data.requiresMinQuantity is bool
+      && (
+        (!request.resource.data.requiresMinQuantity && request.resource.data.minQuantity == null)
+        || (
+          request.resource.data.requiresMinQuantity
+          && request.resource.data.minQuantity is number
+          && request.resource.data.minQuantity >= 1
+          && request.resource.data.minQuantity <= 999
+        )
+      );
     }
 
     function isValidCategory(categoryId) {

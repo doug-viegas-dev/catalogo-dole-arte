@@ -84,10 +84,13 @@ const normalizeProduct = (id: string, data: unknown): Product | null => {
   const imageUrl = asString(data.imageUrl).trim();
   const imageUrls = asStringArray(data.imageUrls);
   const normalizedImages = imageUrls.length ? imageUrls : (imageUrl ? [imageUrl] : []);
+  const minQuantity = asNumber(data.minQuantity, 0);
+  const requiresMinQuantity = asBoolean(data.requiresMinQuantity, minQuantity > 0);
 
   if (!id || !name || !description || !category) return null;
+  if (requiresMinQuantity && minQuantity < 1) return null;
 
-  return {
+  const product: Product = {
     id,
     name,
     description,
@@ -97,8 +100,14 @@ const normalizeProduct = (id: string, data: unknown): Product | null => {
     imageUrls: normalizedImages,
     inStock: asBoolean(data.inStock, true),
     featured: asBoolean(data.featured),
-    minQuantity: asNumber(data.minQuantity, 0) || undefined,
+    requiresMinQuantity,
   };
+
+  if (requiresMinQuantity) {
+    product.minQuantity = Math.floor(minQuantity);
+  }
+
+  return product;
 };
 
 const normalizeCategory = (id: string, data: unknown): Category | null => {
@@ -107,12 +116,18 @@ const normalizeCategory = (id: string, data: unknown): Category | null => {
   const name = asString(data.name).trim();
   if (!id || !name) return null;
 
-  return {
+  const category: Category = {
     id,
     name,
     icon: asString(data.icon, 'Sparkles'),
-    description: asString(data.description) || undefined,
   };
+
+  const description = asString(data.description).trim();
+  if (description) {
+    category.description = description;
+  }
+
+  return category;
 };
 
 const normalizeSettings = (data: unknown): StoreSettings | null => {

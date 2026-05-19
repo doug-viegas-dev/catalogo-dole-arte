@@ -27,6 +27,20 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onSave,
 }) => {
   const images = product.imageUrls?.length ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
+  const handleRequiresMinQuantityChange = (requiresMinQuantity: boolean) => {
+    if (requiresMinQuantity) {
+      onProductChange({
+        ...product,
+        requiresMinQuantity,
+        minQuantity: product.minQuantity && product.minQuantity > 0 ? product.minQuantity : 1,
+      });
+      return;
+    }
+
+    const productWithoutMinQuantity = { ...product };
+    delete productWithoutMinQuantity.minQuantity;
+    onProductChange({ ...productWithoutMinQuantity, requiresMinQuantity });
+  };
 
   return (
     <form onSubmit={onSave}>
@@ -144,6 +158,36 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <option value="false">Nao</option>
           </select>
         </div>
+
+        <div className="form-group">
+          <label>Pedido Minimo</label>
+          <label className="checkbox-control">
+            <input
+              type="checkbox"
+              checked={product.requiresMinQuantity}
+              onChange={(event) => handleRequiresMinQuantityChange(event.target.checked)}
+            />
+            <span>Exige quantidade minima por pedido</span>
+          </label>
+        </div>
+
+        {product.requiresMinQuantity && (
+          <div className="form-group">
+            <label>Quantidade Minima por Pedido</label>
+            <input
+              type="number"
+              min="1"
+              step="1"
+              required
+              value={product.minQuantity || 1}
+              onChange={(event) => onProductChange({
+                ...product,
+                minQuantity: Math.max(1, parseInt(event.target.value, 10) || 1),
+              })}
+              className="form-control"
+            />
+          </div>
+        )}
 
         <div className="form-submit-row">
           <button type="submit" disabled={isLoading || isImageUploading} className="btn-primary btn-save-full">

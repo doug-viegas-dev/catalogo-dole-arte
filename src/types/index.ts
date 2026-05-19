@@ -8,6 +8,7 @@ export interface Product {
   imageUrls?: string[];
   inStock: boolean;
   featured?: boolean;
+  requiresMinQuantity: boolean;
   minQuantity?: number;
 }
 
