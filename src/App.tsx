@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { Categories } from './components/Categories';
@@ -8,12 +8,22 @@ import { SpecialDates } from './components/SpecialDates';
 import { About } from './components/About';
 import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
-import { AdminPanel } from './components/AdminPanel';
 import './App.scss';
 
 import { SPECIAL_DATES, storeService } from './services/store';
-import { firebaseService } from './services/firebase';
 import type { Product, StoreSettings, Category } from './types';
+
+const AdminPanel = React.lazy(() => (
+  import('./components/AdminPanel').then((module) => ({ default: module.AdminPanel }))
+));
+
+const PANEL_HOSTNAME = 'painel.dolearte.com';
+const STORE_URL = 'https://dolearte.com';
+
+const isPanelHost = () => window.location.hostname === PANEL_HOSTNAME;
+const getInitialPage = (): 'home' | 'admin' => (
+  isPanelHost() || window.location.hash === '#admin' ? 'admin' : 'home'
+);
 
 export const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -21,29 +31,25 @@ export const App: React.FC = () => {
   const [settings, setSettings] = useState<StoreSettings>(storeService.getSettings());
   const [selectedCategory, setSelectedCategory] = useState<string>('todas');
   
-  const [currentPage, setCurrentPage] = useState<'home' | 'admin'>('home');
+  const [currentPage, setCurrentPage] = useState<'home' | 'admin'>(getInitialPage);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Verifica a rota atual via hash
-    const handleHashChange = () => {
-      if (window.location.hash === '#admin') {
-        setCurrentPage('admin');
-        window.scrollTo(0, 0);
-      } else {
-        setCurrentPage('home');
-      }
+    const handleRouteChange = () => {
+      setCurrentPage(getInitialPage());
+      window.scrollTo(0, 0);
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleRouteChange();
+    window.addEventListener('hashchange', handleRouteChange);
+    return () => window.removeEventListener('hashchange', handleRouteChange);
   }, []);
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       try {
+        const { firebaseService } = await import('./services/firebase');
         const loadedProducts = await firebaseService.syncProductsFromFirebase();
         const loadedCategories = await firebaseService.syncCategoriesFromFirebase();
         const loadedSettings = await firebaseService.getSettingsFromFirebase();
@@ -78,6 +84,11 @@ export const App: React.FC = () => {
   };
 
   const handleBackToStore = () => {
+    if (isPanelHost()) {
+      window.location.href = STORE_URL;
+      return;
+    }
+
     window.location.hash = '';
     setCurrentPage('home');
   };
@@ -95,15 +106,17 @@ export const App: React.FC = () => {
 
   if (currentPage === 'admin') {
     return (
-      <AdminPanel 
-        products={products}
-        settings={settings}
-        categories={categories}
-        onUpdateProducts={handleUpdateProducts}
-        onUpdateSettings={handleUpdateSettings}
-        onUpdateCategories={handleUpdateCategories}
-        onBackToStore={handleBackToStore}
-      />
+      <Suspense fallback={<div className="app-loading-screen"><div className="loading-container"><div className="spinner" /><span>Carregando painel...</span></div></div>}>
+        <AdminPanel 
+          products={products}
+          settings={settings}
+          categories={categories}
+          onUpdateProducts={handleUpdateProducts}
+          onUpdateSettings={handleUpdateSettings}
+          onUpdateCategories={handleUpdateCategories}
+          onBackToStore={handleBackToStore}
+        />
+      </Suspense>
     );
   }
 

@@ -1,62 +1,146 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
-import type { Firestore } from 'firebase/firestore';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import {
+  browserSessionPersistence,
+  getAuth,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  setPersistence,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+} from 'firebase/auth';
 import type { Auth, User } from 'firebase/auth';
-import type { Product, StoreSettings, Category } from '../types';
+import { collection, deleteDoc, doc, getDocs, getFirestore, setDoc } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import type { FirebaseStorage } from 'firebase/storage';
+import type { Category, Product, StoreSettings } from '../types';
 import { storeService } from './store';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAm1JpltYryh4aJsnZyrqEe1vgmPig3Ras",
-  authDomain: "catalogo-dole-arte.firebaseapp.com",
-  projectId: "catalogo-dole-arte",
-  storageBucket: "catalogo-dole-arte.firebasestorage.app",
-  messagingSenderId: "442411515418",
-  appId: "1:442411515418:web:25c337aa4ab9877e561ba3",
-  measurementId: "G-339VCR2Y3J"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 let db: Firestore | null = null;
 let auth: Auth | null = null;
+let storage: FirebaseStorage | null = null;
 let isFirebaseConfigured = false;
 
 try {
-  if (firebaseConfig.apiKey && firebaseConfig.apiKey.startsWith('AIza')) {
+  if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId) {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
+    void setPersistence(auth, browserSessionPersistence);
+    storage = getStorage(app);
     isFirebaseConfigured = true;
-    console.log('Firebase inicializado com sucesso no projeto:', firebaseConfig.projectId);
-  } else {
-    console.warn('Modo LocalStorage ativado. Para nuvem, insira credenciais corretas.');
   }
 } catch (e) {
   console.error('Erro ao inicializar Firebase:', e);
 }
 
-const normalizeProductImages = (product: Product): Product => ({
-  ...product,
-  imageUrls: product.imageUrls?.length ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []),
-});
+const isRecord = (value: unknown): value is Record<string, unknown> => (
+  typeof value === 'object' && value !== null && !Array.isArray(value)
+);
+
+const asString = (value: unknown, fallback = '') => (
+  typeof value === 'string' ? value : fallback
+);
+
+const asNumber = (value: unknown, fallback = 0) => (
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback
+);
+
+const asBoolean = (value: unknown, fallback = false) => (
+  typeof value === 'boolean' ? value : fallback
+);
+
+const asStringArray = (value: unknown): string[] => (
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : []
+);
+
+const safePathSegment = (value: string): string => (
+  value.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 80) || 'product'
+);
+
+const normalizeProduct = (id: string, data: unknown): Product | null => {
+  if (!isRecord(data)) return null;
+
+  const name = asString(data.name).trim();
+  const description = asString(data.description).trim();
+  const category = asString(data.category).trim();
+  const price = asNumber(data.price);
+  const imageUrl = asString(data.imageUrl).trim();
+  const imageUrls = asStringArray(data.imageUrls);
+  const normalizedImages = imageUrls.length ? imageUrls : (imageUrl ? [imageUrl] : []);
+
+  if (!id || !name || !description || !category) return null;
+
+  return {
+    id,
+    name,
+    description,
+    price,
+    category,
+    imageUrl: normalizedImages[0] || '',
+    imageUrls: normalizedImages,
+    inStock: asBoolean(data.inStock, true),
+    featured: asBoolean(data.featured),
+    minQuantity: asNumber(data.minQuantity, 0) || undefined,
+  };
+};
+
+const normalizeCategory = (id: string, data: unknown): Category | null => {
+  if (!isRecord(data)) return null;
+
+  const name = asString(data.name).trim();
+  if (!id || !name) return null;
+
+  return {
+    id,
+    name,
+    icon: asString(data.icon, 'Sparkles'),
+    description: asString(data.description) || undefined,
+  };
+};
+
+const normalizeSettings = (data: unknown): StoreSettings | null => {
+  if (!isRecord(data)) return null;
+
+  return {
+    storeName: asString(data.storeName),
+    whatsappNumber: asString(data.whatsappNumber),
+    instagramUrl: asString(data.instagramUrl),
+    heroTitle: asString(data.heroTitle),
+    heroSubtitle: asString(data.heroSubtitle),
+    aboutText: asString(data.aboutText),
+    contactEmail: asString(data.contactEmail),
+    contactHours: asString(data.contactHours),
+  };
+};
 
 export const firebaseService = {
   isConfigured() {
     return isFirebaseConfigured;
   },
 
-  getAuthInstance() {
-    return auth;
+  async loginAdmin(email: string, pass: string): Promise<User> {
+    if (!auth) throw new Error('Autenticacao indisponivel.');
+    const credential = await signInWithEmailAndPassword(auth, email, pass);
+    return credential.user;
   },
 
-  async loginAdmin(email: string, pass: string): Promise<void> {
-    if (!auth) throw new Error('Firebase Auth nao configurado ou offline.');
-    await signInWithEmailAndPassword(auth, email, pass);
-  },
-
-  async loginWithGoogle(): Promise<void> {
-    if (!auth) throw new Error('Firebase Auth nao configurado ou offline.');
+  async loginWithGoogle(): Promise<User> {
+    if (!auth) throw new Error('Autenticacao indisponivel.');
     const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    const credential = await signInWithPopup(auth, provider);
+    return credential.user;
   },
 
   async logoutAdmin(): Promise<void> {
@@ -65,126 +149,112 @@ export const firebaseService = {
   },
 
   onAuthStateChanged(callback: (user: User | null) => void): () => void {
-    if (!auth) return () => {};
+    if (!auth) return () => undefined;
     return onAuthStateChanged(auth, callback);
   },
 
   async syncProductsFromFirebase(): Promise<Product[]> {
-    if (!isFirebaseConfigured || !db) return storeService.getProducts().map(normalizeProductImages);
-    try {
-      const querySnapshot = await getDocs(collection(db, 'products'));
-      const products: Product[] = [];
-      querySnapshot.forEach((docSnap) => {
-        products.push(normalizeProductImages({ id: docSnap.id, ...docSnap.data() } as Product));
-      });
-      storeService.saveProducts(products);
-      return products;
-    } catch (e) {
-      console.error('Erro ao buscar produtos do Firestore:', e);
-    }
-    return storeService.getProducts().map(normalizeProductImages);
+    if (!isFirebaseConfigured || !db) return [];
+
+    const querySnapshot = await getDocs(collection(db, 'products'));
+    const products = querySnapshot.docs
+      .map((docSnap) => normalizeProduct(docSnap.id, docSnap.data()))
+      .filter((product): product is Product => Boolean(product));
+
+    storeService.saveProducts(products);
+    return products;
   },
 
   async saveProductToFirebase(product: Product): Promise<void> {
-    const normalizedProduct = normalizeProductImages(product);
-    const current = storeService.getProducts();
-    const updated = current.map(p => p.id === normalizedProduct.id ? normalizedProduct : p);
-    if (!current.some(p => p.id === normalizedProduct.id)) updated.push(normalizedProduct);
-    storeService.saveProducts(updated);
+    const normalizedProduct = normalizeProduct(product.id, product);
+    if (!normalizedProduct) throw new Error('Produto invalido.');
 
-    if (isFirebaseConfigured && db) {
-      try {
-        await setDoc(doc(db, 'products', normalizedProduct.id), normalizedProduct);
-      } catch {
-        console.warn('Erro ao salvar no Firestore. Produto salvo localmente.');
-      }
+    if (!isFirebaseConfigured || !db) {
+      throw new Error('Nao foi possivel salvar agora. Verifique a configuracao do Firebase.');
     }
+
+    await setDoc(doc(db, 'products', normalizedProduct.id), normalizedProduct);
+    storeService.saveProducts([
+      ...storeService.getProducts().filter((item) => item.id !== normalizedProduct.id),
+      normalizedProduct,
+    ]);
   },
 
   async deleteProductFromFirebase(id: string): Promise<void> {
-    const current = storeService.getProducts();
-    storeService.saveProducts(current.filter(p => p.id !== id));
-
-    if (isFirebaseConfigured && db) {
-      try {
-        await deleteDoc(doc(db, 'products', id));
-      } catch {
-        console.warn('Erro ao deletar no Firestore. Produto excluido localmente.');
-      }
+    if (!isFirebaseConfigured || !db) {
+      throw new Error('Nao foi possivel excluir agora. Verifique a configuracao do Firebase.');
     }
+
+    await deleteDoc(doc(db, 'products', id));
+    storeService.saveProducts(storeService.getProducts().filter((product) => product.id !== id));
+  },
+
+  async uploadProductImage(productId: string, image: Blob, index: number): Promise<string> {
+    if (!isFirebaseConfigured || !storage) {
+      throw new Error('Envio de imagem indisponivel. Verifique a configuracao do Firebase.');
+    }
+
+    const path = `products/${safePathSegment(productId)}/${Date.now()}-${index}.webp`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, image, { contentType: 'image/webp' });
+    return getDownloadURL(storageRef);
   },
 
   async syncCategoriesFromFirebase(): Promise<Category[]> {
-    if (!isFirebaseConfigured || !db) return storeService.getCategories();
-    try {
-      const querySnapshot = await getDocs(collection(db, 'categories'));
-      const categories: Category[] = [];
-      querySnapshot.forEach((docSnap) => {
-        categories.push({ id: docSnap.id, ...docSnap.data() } as Category);
-      });
-      storeService.saveCategories(categories);
-      return categories;
-    } catch (e) {
-      console.error('Erro ao buscar categorias:', e);
-    }
-    return storeService.getCategories();
+    if (!isFirebaseConfigured || !db) return [];
+
+    const querySnapshot = await getDocs(collection(db, 'categories'));
+    const categories = querySnapshot.docs
+      .map((docSnap) => normalizeCategory(docSnap.id, docSnap.data()))
+      .filter((category): category is Category => Boolean(category));
+
+    storeService.saveCategories(categories);
+    return categories;
   },
 
   async saveCategoryToFirebase(category: Category): Promise<void> {
-    const current = storeService.getCategories();
-    const updated = current.map(c => c.id === category.id ? category : c);
-    if (!current.some(c => c.id === category.id)) updated.push(category);
-    storeService.saveCategories(updated);
+    const normalizedCategory = normalizeCategory(category.id, category);
+    if (!normalizedCategory) throw new Error('Categoria invalida.');
 
-    if (isFirebaseConfigured && db) {
-      try {
-        await setDoc(doc(db, 'categories', category.id), category);
-      } catch {
-        console.warn('Erro ao salvar categoria no Firestore. Salvo localmente.');
-      }
+    if (!isFirebaseConfigured || !db) {
+      throw new Error('Nao foi possivel salvar agora. Verifique a configuracao do Firebase.');
     }
+
+    await setDoc(doc(db, 'categories', normalizedCategory.id), normalizedCategory);
+    storeService.saveCategories([
+      ...storeService.getCategories().filter((item) => item.id !== normalizedCategory.id),
+      normalizedCategory,
+    ]);
   },
 
   async deleteCategoryFromFirebase(id: string): Promise<void> {
-    const current = storeService.getCategories();
-    storeService.saveCategories(current.filter(c => c.id !== id));
-
-    if (isFirebaseConfigured && db) {
-      try {
-        await deleteDoc(doc(db, 'categories', id));
-      } catch {
-        console.warn('Erro ao excluir categoria no Firestore. Excluido localmente.');
-      }
+    if (!isFirebaseConfigured || !db) {
+      throw new Error('Nao foi possivel excluir agora. Verifique a configuracao do Firebase.');
     }
+
+    await deleteDoc(doc(db, 'categories', id));
+    storeService.saveCategories(storeService.getCategories().filter((category) => category.id !== id));
   },
 
   async getSettingsFromFirebase(): Promise<StoreSettings> {
     if (!isFirebaseConfigured || !db) return storeService.getSettings();
-    try {
-      const querySnapshot = await getDocs(collection(db, 'settings'));
-      let settings: StoreSettings | null = null;
-      querySnapshot.forEach((docSnap) => {
-        if (docSnap.id === 'general') settings = docSnap.data() as StoreSettings;
-      });
-      if (settings) {
-        storeService.saveSettings(settings);
-        return settings;
-      }
-    } catch (e) {
-      console.error('Erro ao buscar configuracoes:', e);
-    }
-    return storeService.getSettings();
+
+    const querySnapshot = await getDocs(collection(db, 'settings'));
+    const settingsDoc = querySnapshot.docs.find((docSnap) => docSnap.id === 'general');
+    const settings = normalizeSettings(settingsDoc?.data());
+
+    if (!settings) return storeService.getSettings();
+
+    storeService.saveSettings(settings);
+    return settings;
   },
 
   async saveSettingsToFirebase(settings: StoreSettings): Promise<void> {
-    storeService.saveSettings(settings);
-
-    if (isFirebaseConfigured && db) {
-      try {
-        await setDoc(doc(db, 'settings', 'general'), settings);
-      } catch (e) {
-        console.warn('Erro ao salvar configuracoes no Firestore. Salvo localmente.', e);
-      }
+    if (!isFirebaseConfigured || !db) {
+      throw new Error('Nao foi possivel salvar agora. Verifique a configuracao do Firebase.');
     }
+
+    await setDoc(doc(db, 'settings', 'general'), settings);
+    storeService.saveSettings(settings);
   },
 };

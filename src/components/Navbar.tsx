@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MessageCircle, Menu, X } from 'lucide-react';
 import type { StoreSettings } from '../types';
 import { getWhatsappLink } from '../utils/whatsapp';
+import { getSafeInstagramUrl } from '../utils/safeLinks';
 import { InstagramIcon } from './InstagramIcon';
 import '../styles/Navbar.scss';
 
@@ -48,6 +49,7 @@ interface NavbarProps {
     };
 
     const whatsappUrl = getWhatsappLink(settings.whatsappNumber);
+    const instagramUrl = getSafeInstagramUrl(settings.instagramUrl);
 
     return (
       <>
@@ -147,7 +149,7 @@ interface NavbarProps {
               </a>
             </li>
             <li>
-              <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="instagram-mobile-link">
+              <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="instagram-mobile-link">
                 <InstagramIcon size={20} /> Instagram da Loja
               </a>
             </li>

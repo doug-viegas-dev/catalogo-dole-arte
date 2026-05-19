@@ -1,0 +1,96 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null;
+    }
+
+    function isValidString(value, maxLength) {
+      return value is string && value.size() > 0 && value.size() <= maxLength;
+    }
+
+    function isValidOptionalString(value, maxLength) {
+      return value == null || (value is string && value.size() <= maxLength);
+    }
+
+    function isValidProduct(productId) {
+      return request.resource.data.keys().hasOnly([
+        'id',
+        'name',
+        'description',
+        'price',
+        'category',
+        'imageUrl',
+        'imageUrls',
+        'inStock',
+        'featured',
+        'minQuantity'
+      ])
+      && request.resource.data.id == productId
+      && isValidString(request.resource.data.name, 120)
+      && isValidString(request.resource.data.description, 1000)
+      && isValidString(request.resource.data.category, 80)
+      && request.resource.data.price is number
+      && request.resource.data.price >= 0
+      && isValidOptionalString(request.resource.data.imageUrl, 2048)
+      && request.resource.data.imageUrls is list
+      && request.resource.data.imageUrls.size() <= 12
+      && request.resource.data.inStock is bool
+      && request.resource.data.featured is bool
+      && (request.resource.data.minQuantity == null || request.resource.data.minQuantity is number);
+    }
+
+    function isValidCategory(categoryId) {
+      return request.resource.data.keys().hasOnly(['id', 'name', 'icon', 'description'])
+      && request.resource.data.id == categoryId
+      && isValidString(request.resource.data.name, 80)
+      && isValidString(request.resource.data.icon, 80)
+      && isValidOptionalString(request.resource.data.description, 500);
+    }
+
+    function isValidSettings() {
+      return request.resource.data.keys().hasOnly([
+        'storeName',
+        'whatsappNumber',
+        'instagramUrl',
+        'heroTitle',
+        'heroSubtitle',
+        'aboutText',
+        'contactEmail',
+        'contactHours'
+      ])
+      && isValidString(request.resource.data.storeName, 120)
+      && isValidString(request.resource.data.whatsappNumber, 32)
+      && isValidString(request.resource.data.instagramUrl, 256)
+      && request.resource.data.instagramUrl.matches('^https://(www\\.)?instagram\\.com/.*')
+      && isValidString(request.resource.data.heroTitle, 160)
+      && isValidString(request.resource.data.heroSubtitle, 500)
+      && isValidString(request.resource.data.aboutText, 3000)
+      && isValidString(request.resource.data.contactEmail, 160)
+      && isValidString(request.resource.data.contactHours, 200);
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidProduct(productId);
+      allow delete: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidCategory(categoryId);
+      allow delete: if isAdmin();
+    }
+
+    match /settings/{settingsId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && settingsId == 'general' && isValidSettings();
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,4 +1,4 @@
-@import './styles/main.scss';
+@use './styles/main.scss' as *;
 
 .app-loading-screen {
   height: 100vh;

@@ -2,6 +2,7 @@ import React from 'react';
 import { MessageCircle, Mail, Clock } from 'lucide-react';
 import type { StoreSettings } from '../types';
 import { getWhatsappLink } from '../utils/whatsapp';
+import { getSafeInstagramUrl } from '../utils/safeLinks';
 import { InstagramIcon } from './InstagramIcon';
 import '../styles/Contact.scss';
 
@@ -11,6 +12,7 @@ interface ContactProps {
 
 export const Contact: React.FC<ContactProps> = ({ settings }) => {
   const whatsappUrl = getWhatsappLink(settings.whatsappNumber);
+  const instagramUrl = getSafeInstagramUrl(settings.instagramUrl);
 
   return (
     <section id="contato" className="contact">
@@ -25,7 +27,7 @@ export const Contact: React.FC<ContactProps> = ({ settings }) => {
               <span>Falar no WhatsApp</span>
             </a>
 
-            <a href={settings.instagramUrl} target="_blank" rel="noopener noreferrer" className="btn-instagram">
+            <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="btn-instagram">
               <InstagramIcon size={22} />
               <span>Seguir no Instagram</span>
             </a>

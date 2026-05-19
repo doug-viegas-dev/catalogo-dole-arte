@@ -1,4 +1,4 @@
-@import './main.scss';
+@use './main.scss' as *;
 
 .admin-page-container {
   min-height: 100vh;
@@ -241,181 +241,6 @@
       background: rgba(0,0,0,0.06);
       padding: 2px 6px;
       border-radius: 4px;
-    }
-  }
-
-  .admin-db-actions-banner {
-    background: linear-gradient(135deg, #0d6864 0%, #159893 100%);
-    color: white;
-    padding: 24px 32px;
-    border-radius: 20px;
-    margin-bottom: 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    box-shadow: 0 10px 25px rgba(13, 104, 100, 0.2);
-
-    .db-info {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-
-      .icon-pulse {
-        animation: pulseDbIcon 2s infinite;
-        flex-shrink: 0;
-        color: #f7a072;
-      }
-
-      h4 {
-        font-size: 1.3rem;
-        margin: 0 0 6px 0;
-        font-family: 'Playfair Display', serif;
-        color: white;
-      }
-
-      p {
-        margin: 0;
-        font-size: 0.95rem;
-        opacity: 0.9;
-        max-width: 600px;
-        line-height: 1.4;
-      }
-    }
-
-    .btn-link-rules {
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-top: 10px;
-      cursor: pointer;
-      display: inline-block;
-      transition: all 0.2s;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.25);
-      }
-    }
-
-    .btn-db-sync {
-      background: #f7a072;
-      color: #111;
-      border: none;
-      padding: 14px 28px;
-      border-radius: 99px;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.3s;
-      box-shadow: 0 4px 15px rgba(247, 160, 114, 0.4);
-
-      &:hover:not(:disabled) {
-        background: lighten(#f7a072, 8%);
-        transform: translateY(-2px);
-      }
-
-      &:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-      }
-    }
-  }
-
-  @keyframes pulseDbIcon {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.8; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-
-  .rules-help-box {
-    background: #fff8eb;
-    border: 2px solid #fbd38d;
-    padding: 28px 32px;
-    border-radius: 20px;
-    margin-bottom: 32px;
-    color: #4a3f35;
-    box-shadow: 0 8px 25px rgba(251, 211, 141, 0.25);
-
-    .rules-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-
-      h4 {
-        font-size: 1.3rem;
-        margin: 0;
-        color: #b7791f;
-        font-family: 'Playfair Display', serif;
-      }
-
-      .btn-close-rules {
-        background: none;
-        border: none;
-        font-size: 1.4rem;
-        color: #b7791f;
-        cursor: pointer;
-        padding: 4px;
-        line-height: 1;
-
-        &:hover {
-          color: #744210;
-        }
-      }
-    }
-
-    ol {
-      margin: 16px 0;
-      padding-left: 24px;
-      line-height: 1.6;
-
-      li {
-        margin-bottom: 8px;
-      }
-    }
-
-    .rules-code {
-      background: #2d3748;
-      color: #e2e8f0;
-      padding: 18px 24px;
-      border-radius: 12px;
-      font-family: 'Fira Code', monospace;
-      font-size: 0.95rem;
-      overflow-x: auto;
-      margin: 20px 0;
-    }
-
-    .btn-copy-rules {
-      background: #dd6b20;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.2s;
-      margin-bottom: 16px;
-
-      &:hover {
-        background: #c05621;
-      }
-    }
-
-    .rules-note {
-      font-size: 0.95rem;
-      margin: 0;
-      color: #744210;
     }
   }
 
@@ -762,7 +587,7 @@
         transition: all 0.2s;
 
         &:hover {
-          background: darken($primary, 5%);
+          background: #0a5653;
         }
       }
 
@@ -960,8 +785,6 @@
       }
     }
 
-    .admin-db-actions-banner,
-    .rules-help-box,
     .admin-alert-success,
     .admin-alert-warning {
       padding: 16px;

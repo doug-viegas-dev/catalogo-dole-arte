@@ -1,4 +1,4 @@
-@import './main.scss';
+@use './main.scss' as *;
 
 .about {
   padding: 120px 0;

@@ -1,4 +1,4 @@
-@import './main.scss';
+@use './main.scss' as *;
 
 .hero {
   padding: 160px 0 100px;

@@ -1,4 +1,4 @@
-@import './main.scss';
+@use './main.scss' as *;
 
 .catalog {
   padding: 100px 0;
