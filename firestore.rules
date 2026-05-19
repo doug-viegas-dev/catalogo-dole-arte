@@ -14,6 +14,10 @@ service cloud.firestore {
       return value == null || (value is string && value.size() <= maxLength);
     }
 
+    function hasField(fieldName) {
+      return request.resource.data.keys().hasAny([fieldName]);
+    }
+
     function isValidProduct(productId) {
       return request.resource.data.keys().hasOnly([
         'id',
@@ -41,9 +45,10 @@ service cloud.firestore {
       && request.resource.data.featured is bool
       && request.resource.data.requiresMinQuantity is bool
       && (
-        (!request.resource.data.requiresMinQuantity && request.resource.data.minQuantity == null)
+        (!request.resource.data.requiresMinQuantity && !hasField('minQuantity'))
         || (
           request.resource.data.requiresMinQuantity
+          && hasField('minQuantity')
           && request.resource.data.minQuantity is number
           && request.resource.data.minQuantity >= 1
           && request.resource.data.minQuantity <= 999

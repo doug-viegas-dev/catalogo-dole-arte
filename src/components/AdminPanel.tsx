@@ -88,6 +88,42 @@ const getLoginErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+const getAdminErrorMessage = (error: unknown, fallback: string) => {
+  const code = typeof error === 'object' && error !== null && 'code' in error
+    ? String((error as { code?: unknown }).code)
+    : '';
+
+  if (code === 'permission-denied') {
+    return `${fallback} As regras do Firestore negaram a operacao. Verifique se as regras publicadas aceitam os campos atuais do produto.`;
+  }
+
+  if (code === 'unauthenticated') {
+    return `${fallback} Sua sessao expirou. Faca login novamente.`;
+  }
+
+  if (error instanceof Error && error.message) {
+    return `${fallback} Detalhe: ${error.message}`;
+  }
+
+  return fallback;
+};
+
+const prepareProductForSave = (product: Product): Product => {
+  const requiresMinQuantity = Boolean(product.requiresMinQuantity);
+  const productToSave: Product = {
+    ...product,
+    requiresMinQuantity,
+  };
+
+  if (requiresMinQuantity) {
+    productToSave.minQuantity = Math.max(1, Math.floor(product.minQuantity || 1));
+    return productToSave;
+  }
+
+  delete productToSave.minQuantity;
+  return productToSave;
+};
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   products,
   settings,
@@ -295,7 +331,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       }
 
       const imageUrls = editingProduct.imageUrls?.length ? editingProduct.imageUrls : (editingProduct.imageUrl ? [editingProduct.imageUrl] : []);
-      const productToSave = { ...editingProduct, imageUrl: imageUrls[0] || '', imageUrls };
+      const productToSave = prepareProductForSave({ ...editingProduct, imageUrl: imageUrls[0] || '', imageUrls });
       await adminService.saveProduct(productToSave);
 
       const updatedProducts = isAddingNewProduct
@@ -308,7 +344,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       showSuccess('Produto salvo com sucesso.');
     } catch (error) {
       console.error(error);
-      showError('Erro ao salvar o produto.');
+      showError(getAdminErrorMessage(error, 'Erro ao salvar o produto.'));
     } finally {
       setLoading(false);
     }
@@ -323,7 +359,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       showSuccess('Produto excluido com sucesso.');
     } catch (error) {
       console.error(error);
-      showError('Erro ao excluir o produto.');
+      showError(getAdminErrorMessage(error, 'Erro ao excluir o produto.'));
     }
   };
 
@@ -354,7 +390,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       showSuccess('Categoria salva com sucesso.');
     } catch (error) {
       console.error(error);
-      showError('Erro ao salvar a categoria.');
+      showError(getAdminErrorMessage(error, 'Erro ao salvar a categoria.'));
     } finally {
       setLoading(false);
     }
@@ -373,7 +409,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       showSuccess('Categoria excluida com sucesso.');
     } catch (error) {
       console.error(error);
-      showError('Erro ao excluir a categoria.');
+      showError(getAdminErrorMessage(error, 'Erro ao excluir a categoria.'));
     }
   };
 
@@ -397,7 +433,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       showSuccess('Configuracoes salvas com sucesso.');
     } catch (error) {
       console.error(error);
-      showError('Erro ao salvar as configuracoes.');
+      showError(getAdminErrorMessage(error, 'Erro ao salvar as configuracoes.'));
     } finally {
       setLoading(false);
     }

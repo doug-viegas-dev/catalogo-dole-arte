@@ -164,14 +164,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           <label className="checkbox-control">
             <input
               type="checkbox"
-              checked={product.requiresMinQuantity}
+              checked={Boolean(product.requiresMinQuantity)}
               onChange={(event) => handleRequiresMinQuantityChange(event.target.checked)}
             />
             <span>Exige quantidade minima por pedido</span>
           </label>
         </div>
 
-        {product.requiresMinQuantity && (
+        {Boolean(product.requiresMinQuantity) && (
           <div className="form-group">
             <label>Quantidade Minima por Pedido</label>
             <input
