@@ -108,7 +108,7 @@ interface NavbarProps {
           </ul>
 
           <div className="nav-actions">
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp" title="Falar no WhatsApp">
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp nav-whatsapp" title="Falar no WhatsApp">
               <MessageCircle size={20} />
               <span>WhatsApp</span>
             </a>
@@ -156,6 +156,17 @@ interface NavbarProps {
           </ul>
         </div>
       )}
+
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mobile-whatsapp-float"
+        aria-label="Falar no WhatsApp"
+        title="Falar no WhatsApp"
+      >
+        <MessageCircle size={22} />
+      </a>
     </>
   );
 };
