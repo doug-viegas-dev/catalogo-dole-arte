@@ -76,6 +76,14 @@ const getLoginErrorMessage = (error: unknown, fallback: string) => {
     return 'O provedor Google nao esta ativado no Firebase Auth.';
   }
 
+  if (error instanceof Error && error.message.includes('VITE_FIREBASE')) {
+    return 'Firebase nao configurado na Vercel. Confira as variaveis VITE_FIREBASE_* em Production e faca um novo deploy.';
+  }
+
+  if (error instanceof Error && error.message === 'Autenticacao indisponivel.') {
+    return 'Autenticacao indisponivel. Confira as variaveis VITE_FIREBASE_* na Vercel.';
+  }
+
   return fallback;
 };
 
@@ -107,10 +115,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const [localSettings, setLocalSettings] = useState<StoreSettings>({ ...settings });
   const [saveSuccess, setSaveSuccess] = useState('');
+  const firebaseConfigurationError = adminService.getConfigurationError();
+  const initialAuthError = firebaseConfigurationError
+    ? 'Firebase nao configurado na Vercel. Confira as variaveis VITE_FIREBASE_* em Production e faca um novo deploy.'
+    : '';
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const confirmAdminAccess = (user: AdminUser) => {
+    setEmailInput(user.email);
+    setIsAuthenticated(true);
+  };
+
   useEffect(() => {
+    void (async () => {
+      try {
+        const redirectUser = await adminService.getRedirectUser();
+        if (redirectUser) {
+          confirmAdminAccess(redirectUser);
+        }
+      } catch (error) {
+        console.error(error);
+        setAuthError(getLoginErrorMessage(error, 'Nao foi possivel concluir o login com o Google.'));
+      }
+    })();
+
     const unsubscribe = adminService.onSessionChange((user, error) => {
       setIsAuthenticated(Boolean(user));
       setEmailInput(user?.email || '');
@@ -150,11 +179,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const showError = (message: string) => {
     setErrorMessage(message);
     setSaveSuccess('');
-  };
-
-  const confirmAdminAccess = (user: AdminUser) => {
-    setEmailInput(user.email);
-    setIsAuthenticated(true);
   };
 
   const handleTabChange = (tab: AdminTab) => {
@@ -380,7 +404,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       <main className="container admin-main-container">
         {!isAuthenticated ? (
           <AdminAuthCard
-            authError={authError}
+            authError={authError || initialAuthError}
             email={emailInput}
             isLoading={loadingAuth}
             password={passwordInput}

@@ -11,6 +11,10 @@ const toAdminUser = (user: User): AdminUser => {
 };
 
 export const adminService = {
+  getConfigurationError(): string {
+    return firebaseService.getConfigurationError();
+  },
+
   onSessionChange(callback: (user: AdminUser | null, error?: Error) => void): () => void {
     return firebaseService.onAuthStateChanged((user) => {
       void (async () => {
@@ -30,6 +34,11 @@ export const adminService = {
 
   async loginWithGoogle(): Promise<void> {
     await firebaseService.loginWithGoogle();
+  },
+
+  async getRedirectUser(): Promise<AdminUser | null> {
+    const user = await firebaseService.getGoogleRedirectUser();
+    return user ? toAdminUser(user) : null;
   },
 
   async logout(): Promise<void> {

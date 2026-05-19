@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import {
   browserSessionPersistence,
   getAuth,
+  getRedirectResult,
   GoogleAuthProvider,
   onAuthStateChanged,
   setPersistence,
@@ -31,17 +32,22 @@ let db: Firestore | null = null;
 let auth: Auth | null = null;
 let storage: FirebaseStorage | null = null;
 let isFirebaseConfigured = false;
+let firebaseInitError = '';
+let authPersistenceReady: Promise<void> = Promise.resolve();
 
 try {
   if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.appId) {
     const app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
-    void setPersistence(auth, browserSessionPersistence);
+    authPersistenceReady = setPersistence(auth, browserSessionPersistence);
     storage = getStorage(app);
     isFirebaseConfigured = true;
+  } else {
+    firebaseInitError = 'Variaveis VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID ou VITE_FIREBASE_APP_ID ausentes.';
   }
 } catch (e) {
+  firebaseInitError = e instanceof Error ? e.message : 'Erro desconhecido ao inicializar Firebase.';
   console.error('Erro ao inicializar Firebase:', e);
 }
 
@@ -130,16 +136,29 @@ export const firebaseService = {
     return isFirebaseConfigured;
   },
 
+  getConfigurationError() {
+    return firebaseInitError;
+  },
+
   async loginAdmin(email: string, pass: string): Promise<User> {
-    if (!auth) throw new Error('Autenticacao indisponivel.');
+    if (!auth) throw new Error(firebaseInitError || 'Autenticacao indisponivel.');
+    await authPersistenceReady;
     const credential = await signInWithEmailAndPassword(auth, email, pass);
     return credential.user;
   },
 
   async loginWithGoogle(): Promise<void> {
-    if (!auth) throw new Error('Autenticacao indisponivel.');
+    if (!auth) throw new Error(firebaseInitError || 'Autenticacao indisponivel.');
+    await authPersistenceReady;
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
+  },
+
+  async getGoogleRedirectUser(): Promise<User | null> {
+    if (!auth) return null;
+    await authPersistenceReady;
+    const result = await getRedirectResult(auth);
+    return result?.user || auth.currentUser;
   },
 
   async logoutAdmin(): Promise<void> {
