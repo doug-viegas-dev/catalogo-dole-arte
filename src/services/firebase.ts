@@ -6,7 +6,7 @@ import {
   onAuthStateChanged,
   setPersistence,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   signOut,
 } from 'firebase/auth';
 import type { Auth, User } from 'firebase/auth';
@@ -136,11 +136,10 @@ export const firebaseService = {
     return credential.user;
   },
 
-  async loginWithGoogle(): Promise<User> {
+  async loginWithGoogle(): Promise<void> {
     if (!auth) throw new Error('Autenticacao indisponivel.');
     const provider = new GoogleAuthProvider();
-    const credential = await signInWithPopup(auth, provider);
-    return credential.user;
+    await signInWithRedirect(auth, provider);
   },
 
   async logoutAdmin(): Promise<void> {

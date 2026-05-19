@@ -55,6 +55,30 @@ const slugify = (value: string) => (
     .replace(/(^-|-$)/g, '')
 );
 
+const getLoginErrorMessage = (error: unknown, fallback: string) => {
+  const code = typeof error === 'object' && error !== null && 'code' in error
+    ? String((error as { code?: unknown }).code)
+    : '';
+
+  if (code === 'auth/unauthorized-domain') {
+    return 'Este dominio nao esta autorizado no Firebase Auth.';
+  }
+
+  if (code === 'auth/popup-blocked') {
+    return 'O navegador bloqueou a janela do Google. Permita pop-ups para este site.';
+  }
+
+  if (code === 'auth/popup-closed-by-user') {
+    return 'A janela do Google foi fechada antes de concluir o login.';
+  }
+
+  if (code === 'auth/operation-not-allowed') {
+    return 'O provedor Google nao esta ativado no Firebase Auth.';
+  }
+
+  return fallback;
+};
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({
   products,
   settings,
@@ -151,7 +175,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       confirmAdminAccess(user);
     } catch (error) {
       console.error(error);
-      setAuthError('E-mail ou senha incorretos.');
+      setAuthError(getLoginErrorMessage(error, 'E-mail ou senha incorretos.'));
     } finally {
       setLoadingAuth(false);
     }
@@ -162,11 +186,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setLoadingAuth(true);
 
     try {
-      const user = await adminService.loginWithGoogle();
-      confirmAdminAccess(user);
+      await adminService.loginWithGoogle();
     } catch (error) {
       console.error(error);
-      setAuthError('Nao foi possivel entrar com o Google.');
+      setAuthError(getLoginErrorMessage(error, 'Nao foi possivel entrar com o Google.'));
     } finally {
       setLoadingAuth(false);
     }

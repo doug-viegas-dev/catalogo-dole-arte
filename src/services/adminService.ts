@@ -28,8 +28,8 @@ export const adminService = {
     return toAdminUser(await firebaseService.loginAdmin(email, password));
   },
 
-  async loginWithGoogle(): Promise<AdminUser> {
-    return toAdminUser(await firebaseService.loginWithGoogle());
+  async loginWithGoogle(): Promise<void> {
+    await firebaseService.loginWithGoogle();
   },
 
   async logout(): Promise<void> {
