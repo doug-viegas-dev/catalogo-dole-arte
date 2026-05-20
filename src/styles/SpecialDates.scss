@@ -1,79 +1,180 @@
 @use './main.scss' as *;
 
 .special-dates {
-  padding: 100px 0;
+  padding: 90px 0;
   background: $cream;
 
   .special-header {
     text-align: center;
-    margin-bottom: 48px;
+    margin-bottom: 34px;
 
     h2 {
-      font-size: 2.5rem;
+      font-size: 2.4rem;
       color: $primary;
       margin-bottom: 12px;
     }
 
     p {
       color: $text-sub;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
     }
   }
 
-  .dates-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 32px;
+  .special-date-tabs {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    margin-bottom: 28px;
 
-    .date-card {
-      position: relative;
-      height: 360px;
-      border-radius: $radius-lg;
-      overflow: hidden;
-      box-shadow: $shadow-md;
+    button {
+      min-width: 160px;
+      padding: 12px 16px;
+      border: 1px solid #dfe8e6;
+      border-radius: 12px;
+      background: $white;
+      color: $primary;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
 
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.6s ease;
+      span {
+        display: block;
+        color: $secondary;
+        font-size: 0.78rem;
+        margin-bottom: 4px;
       }
 
-      .overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(13, 104, 100, 0.95) 0%, rgba(13, 104, 100, 0.4) 50%, rgba(0,0,0,0) 100%);
-        padding: 36px 28px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
+      &.active {
+        background: $primary;
         color: $white;
+        border-color: $primary;
 
-        .date-tag {
-          background: $secondary;
-          color: $white;
-          padding: 6px 16px;
-          border-radius: $radius-pill;
-          font-size: 0.8rem;
-          font-weight: 600;
-          align-self: flex-start;
-          margin-bottom: 16px;
-        }
-
-        h3 {
-          font-family: 'Playfair Display', serif;
-          font-size: 1.8rem;
-          margin-bottom: 8px;
-        }
-
-        p {
-          color: rgba(255, 255, 255, 0.85);
-          font-size: 0.95rem;
+        span {
+          color: rgba(255, 255, 255, 0.8);
         }
       }
+    }
+  }
 
-      &:hover img {
-        transform: scale(1.1);
+  .special-date-intro {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 28px;
+
+    > span {
+      flex: 0 0 auto;
+      padding: 10px 16px;
+      border-radius: 99px;
+      background: $secondary;
+      color: $white;
+      font-weight: 800;
+      font-size: 0.86rem;
+    }
+
+    h3 {
+      color: $primary;
+      font-size: 1.55rem;
+      margin: 0 0 4px;
+    }
+
+    p {
+      margin: 0;
+      color: $text-sub;
+    }
+  }
+
+  .special-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 22px;
+  }
+
+  .special-product-card {
+    background: $white;
+    border: 1px solid #e8eeee;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: $shadow-sm;
+
+    img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  .special-product-content {
+    padding: 18px;
+
+    h4 {
+      color: $primary;
+      font-size: 1.08rem;
+      margin: 0 0 8px;
+      line-height: 1.25;
+    }
+
+    p {
+      color: $text-sub;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      margin: 0 0 16px;
+    }
+  }
+
+  .special-product-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    span {
+      display: block;
+      color: $text-sub;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    strong {
+      color: $secondary;
+      font-size: 1.05rem;
+    }
+
+    .btn-whatsapp {
+      padding: 9px 12px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .special-dates {
+    padding: 64px 0;
+
+    .special-header h2 {
+      font-size: 1.9rem;
+    }
+
+    .special-date-intro {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .special-product-footer {
+      align-items: stretch;
+      flex-direction: column;
+
+      .btn-whatsapp {
+        justify-content: center;
       }
     }
   }

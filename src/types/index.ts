@@ -4,6 +4,7 @@ export interface Product {
   description: string;
   price: number;
   category: string;
+  specialDateCategoryIds?: string[];
   imageUrl: string;
   imageUrls?: string[];
   inStock: boolean;
@@ -43,5 +44,12 @@ export interface SpecialDateItem {
   description: string;
   dateStr: string;
   imageUrl: string;
+  tag: string;
+}
+
+export interface SpecialDateCategory {
+  id: string;
+  name: string;
+  description: string;
   tag: string;
 }

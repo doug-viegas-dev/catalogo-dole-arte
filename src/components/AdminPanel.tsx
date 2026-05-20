@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle } from 'lucide-react';
-import type { Category, Product, StoreSettings } from '../types';
+import type { Category, Product, SpecialDateCategory, StoreSettings } from '../types';
 import { adminService, type AdminUser } from '../services/adminService';
 import { convertToWebP } from '../utils/image';
 import { isSafeInstagramUrl } from '../utils/safeLinks';
@@ -10,6 +10,7 @@ import { AdminTopbar } from './admin/AdminTopbar';
 import { CategoriesAdmin } from './admin/CategoriesAdmin';
 import { ProductsAdmin } from './admin/ProductsAdmin';
 import { SettingsAdmin } from './admin/SettingsAdmin';
+import { SpecialDatesAdmin } from './admin/SpecialDatesAdmin';
 import type { AdminTab, ProductStockFilter } from './admin/types';
 import '../styles/AdminPanel.scss';
 
@@ -22,9 +23,11 @@ interface AdminPanelProps {
   products: Product[];
   settings: StoreSettings;
   categories: Category[];
+  specialDateCategories: SpecialDateCategory[];
   onUpdateProducts: (updated: Product[]) => void;
   onUpdateSettings: (updated: StoreSettings) => void;
   onUpdateCategories: (updated: Category[]) => void;
+  onUpdateSpecialDateCategories: (updated: SpecialDateCategory[]) => void;
   onBackToStore: () => void;
 }
 
@@ -34,6 +37,7 @@ const createProduct = (categories: Category[]): Product => ({
   description: '',
   price: 0,
   category: categories.find((category) => category.id !== 'todas')?.id || '',
+  specialDateCategoryIds: [],
   imageUrl: '',
   imageUrls: [],
   inStock: true,
@@ -45,6 +49,13 @@ const createCategory = (): Category => ({
   id: `cat-${Date.now()}`,
   name: '',
   icon: 'Sparkles',
+});
+
+const createSpecialDateCategory = (): SpecialDateCategory => ({
+  id: `data-${Date.now()}`,
+  name: '',
+  description: '',
+  tag: '',
 });
 
 const slugify = (value: string) => (
@@ -112,6 +123,7 @@ const prepareProductForSave = (product: Product): Product => {
   const requiresMinQuantity = Boolean(product.requiresMinQuantity);
   const productToSave: Product = {
     ...product,
+    specialDateCategoryIds: Array.from(new Set(product.specialDateCategoryIds || [])),
     requiresMinQuantity,
   };
 
@@ -128,9 +140,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   products,
   settings,
   categories,
+  specialDateCategories,
   onUpdateProducts,
   onUpdateSettings,
   onUpdateCategories,
+  onUpdateSpecialDateCategories,
   onBackToStore,
 }) => {
   const [activeTab, setActiveTab] = useState<AdminTab>('products');
@@ -149,6 +163,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [editingSpecialDateCategory, setEditingSpecialDateCategory] = useState<SpecialDateCategory | null>(null);
+  const [isAddingNewSpecialDateCategory, setIsAddingNewSpecialDateCategory] = useState(false);
 
   const [localSettings, setLocalSettings] = useState<StoreSettings>({ ...settings });
   const [saveSuccess, setSaveSuccess] = useState('');
@@ -222,8 +238,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setActiveTab(tab);
     setEditingProduct(null);
     setEditingCategory(null);
+    setEditingSpecialDateCategory(null);
     setIsAddingNewProduct(false);
     setIsAddingNewCategory(false);
+    setIsAddingNewSpecialDateCategory(false);
   };
 
   const handleLogin = async (event: React.FormEvent) => {
@@ -418,6 +436,68 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setEditingCategory(createCategory());
   };
 
+  const handleSaveSpecialDateCategory = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingSpecialDateCategory) return;
+
+    setLoading(true);
+    try {
+      const categoryToSave = {
+        ...editingSpecialDateCategory,
+        id: isAddingNewSpecialDateCategory
+          ? slugify(editingSpecialDateCategory.name) || editingSpecialDateCategory.id
+          : editingSpecialDateCategory.id,
+      };
+      const updatedCategories = isAddingNewSpecialDateCategory
+        ? [...specialDateCategories, categoryToSave]
+        : specialDateCategories.map((category) => category.id === categoryToSave.id ? categoryToSave : category);
+
+      await Promise.all(updatedCategories.map((category) => adminService.saveSpecialDateCategory(category)));
+      onUpdateSpecialDateCategories(updatedCategories);
+      setEditingSpecialDateCategory(null);
+      setIsAddingNewSpecialDateCategory(false);
+      showSuccess('Data especial salva com sucesso.');
+    } catch (error) {
+      console.error(error);
+      showError(getAdminErrorMessage(error, 'Erro ao salvar a data especial.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteSpecialDateCategory = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta data especial?')) return;
+
+    try {
+      await adminService.deleteSpecialDateCategory(id);
+      const updatedSpecialDateCategories = specialDateCategories.filter((category) => category.id !== id);
+      await Promise.all(
+        updatedSpecialDateCategories.map((category) => adminService.saveSpecialDateCategory(category)),
+      );
+      onUpdateSpecialDateCategories(updatedSpecialDateCategories);
+
+      const updatedProducts = products.map((product) => ({
+        ...product,
+        specialDateCategoryIds: (product.specialDateCategoryIds || []).filter((categoryId) => categoryId !== id),
+      }));
+      await Promise.all(
+        updatedProducts
+          .filter((product, index) => product.specialDateCategoryIds?.length !== products[index].specialDateCategoryIds?.length)
+          .map((product) => adminService.saveProduct(prepareProductForSave(product))),
+      );
+      onUpdateProducts(updatedProducts);
+      showSuccess('Data especial excluida com sucesso.');
+    } catch (error) {
+      console.error(error);
+      showError(getAdminErrorMessage(error, 'Erro ao excluir a data especial.'));
+    }
+  };
+
+  const handleStartAddSpecialDateCategory = () => {
+    setIsAddingNewSpecialDateCategory(true);
+    setEditingSpecialDateCategory(createSpecialDateCategory());
+  };
+
   const handleSaveSettings = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -461,6 +541,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
               activeTab={activeTab}
               categoriesCount={categories.length}
               productsCount={products.length}
+              specialDateCategoriesCount={specialDateCategories.length}
               onChange={handleTabChange}
             />
 
@@ -481,6 +562,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             {activeTab === 'products' && (
               <ProductsAdmin
                 categories={categories}
+                specialDateCategories={specialDateCategories}
                 editingProduct={editingProduct}
                 filteredProducts={filteredProducts}
                 isAddingNewProduct={isAddingNewProduct}
@@ -517,6 +599,22 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                 onEditCategory={setEditingCategory}
                 onSaveCategory={handleSaveCategory}
                 onStartAddCategory={handleStartAddCategory}
+              />
+            )}
+
+            {activeTab === 'specialDates' && (
+              <SpecialDatesAdmin
+                editingCategory={editingSpecialDateCategory}
+                isAddingNewCategory={isAddingNewSpecialDateCategory}
+                isLoading={loading}
+                products={products}
+                specialDateCategories={specialDateCategories}
+                onCancelEdit={() => setEditingSpecialDateCategory(null)}
+                onCategoryChange={setEditingSpecialDateCategory}
+                onDeleteCategory={handleDeleteSpecialDateCategory}
+                onEditCategory={setEditingSpecialDateCategory}
+                onSaveCategory={handleSaveSpecialDateCategory}
+                onStartAddCategory={handleStartAddSpecialDateCategory}
               />
             )}
 

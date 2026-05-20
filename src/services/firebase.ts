@@ -14,7 +14,7 @@ import { collection, deleteDoc, doc, getDocs, getFirestore, setDoc } from 'fireb
 import type { Firestore } from 'firebase/firestore';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import type { FirebaseStorage } from 'firebase/storage';
-import type { Category, Product, StoreSettings } from '../types';
+import type { Category, Product, SpecialDateCategory, StoreSettings } from '../types';
 import { storeService } from './store';
 
 const firebaseConfig = {
@@ -86,6 +86,7 @@ const normalizeProduct = (id: string, data: unknown): Product | null => {
   const normalizedImages = imageUrls.length ? imageUrls : (imageUrl ? [imageUrl] : []);
   const minQuantity = asNumber(data.minQuantity, 0);
   const requiresMinQuantity = asBoolean(data.requiresMinQuantity, minQuantity > 0);
+  const specialDateCategoryIds = asStringArray(data.specialDateCategoryIds);
 
   if (!id || !name || !description || !category) return null;
   if (requiresMinQuantity && minQuantity < 1) return null;
@@ -96,6 +97,7 @@ const normalizeProduct = (id: string, data: unknown): Product | null => {
     description,
     price,
     category,
+    specialDateCategoryIds,
     imageUrl: normalizedImages[0] || '',
     imageUrls: normalizedImages,
     inStock: asBoolean(data.inStock, true),
@@ -128,6 +130,18 @@ const normalizeCategory = (id: string, data: unknown): Category | null => {
   }
 
   return category;
+};
+
+const normalizeSpecialDateCategory = (id: string, data: unknown): SpecialDateCategory | null => {
+  if (!isRecord(data)) return null;
+
+  const name = asString(data.name).trim();
+  const description = asString(data.description).trim();
+  const tag = asString(data.tag).trim();
+
+  if (!id || !name || !description || !tag) return null;
+
+  return { id, name, description, tag };
 };
 
 const normalizeSettings = (data: unknown): StoreSettings | null => {
@@ -265,6 +279,46 @@ export const firebaseService = {
 
     await deleteDoc(doc(db, 'categories', id));
     storeService.saveCategories(storeService.getCategories().filter((category) => category.id !== id));
+  },
+
+  async syncSpecialDateCategoriesFromFirebase(): Promise<SpecialDateCategory[]> {
+    if (!isFirebaseConfigured || !db) return storeService.getSpecialDateCategories();
+
+    const querySnapshot = await getDocs(collection(db, 'specialDateCategories'));
+    const specialDateCategories = querySnapshot.docs
+      .map((docSnap) => normalizeSpecialDateCategory(docSnap.id, docSnap.data()))
+      .filter((category): category is SpecialDateCategory => Boolean(category));
+
+    if (specialDateCategories.length === 0) return storeService.getSpecialDateCategories();
+
+    storeService.saveSpecialDateCategories(specialDateCategories);
+    return specialDateCategories;
+  },
+
+  async saveSpecialDateCategoryToFirebase(category: SpecialDateCategory): Promise<void> {
+    const normalizedCategory = normalizeSpecialDateCategory(category.id, category);
+    if (!normalizedCategory) throw new Error('Categoria de data especial invalida.');
+
+    if (!isFirebaseConfigured || !db) {
+      throw new Error('Nao foi possivel salvar agora. Verifique a configuracao do Firebase.');
+    }
+
+    await setDoc(doc(db, 'specialDateCategories', normalizedCategory.id), normalizedCategory);
+    storeService.saveSpecialDateCategories([
+      ...storeService.getSpecialDateCategories().filter((item) => item.id !== normalizedCategory.id),
+      normalizedCategory,
+    ]);
+  },
+
+  async deleteSpecialDateCategoryFromFirebase(id: string): Promise<void> {
+    if (!isFirebaseConfigured || !db) {
+      throw new Error('Nao foi possivel excluir agora. Verifique a configuracao do Firebase.');
+    }
+
+    await deleteDoc(doc(db, 'specialDateCategories', id));
+    storeService.saveSpecialDateCategories(
+      storeService.getSpecialDateCategories().filter((category) => category.id !== id),
+    );
   },
 
   async getSettingsFromFirebase(): Promise<StoreSettings> {

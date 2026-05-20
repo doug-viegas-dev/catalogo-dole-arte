@@ -1,14 +1,21 @@
 import { Edit, Trash2 } from 'lucide-react';
-import type { Category, Product } from '../../types';
+import type { Category, Product, SpecialDateCategory } from '../../types';
 
 interface ProductTableProps {
   categories: Category[];
+  specialDateCategories: SpecialDateCategory[];
   products: Product[];
   onDeleteProduct: (id: string) => void;
   onEditProduct: (product: Product) => void;
 }
 
-export const ProductTable: React.FC<ProductTableProps> = ({ categories, products, onDeleteProduct, onEditProduct }) => {
+export const ProductTable: React.FC<ProductTableProps> = ({
+  categories,
+  specialDateCategories,
+  products,
+  onDeleteProduct,
+  onEditProduct,
+}) => {
   if (products.length === 0) {
     return (
       <div className="admin-empty-state">
@@ -24,6 +31,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ categories, products
           <th>Imagem</th>
           <th>Nome do Produto</th>
           <th>Categoria</th>
+          <th>Datas especiais</th>
           <th>Preco Inicial</th>
           <th>Estoque</th>
           <th>Acoes</th>
@@ -38,6 +46,19 @@ export const ProductTable: React.FC<ProductTableProps> = ({ categories, products
             <td data-label="Produto" className="cell-bold">{product.name}</td>
             <td data-label="Categoria" className="cell-category">
               {categories.find((category) => category.id === product.category)?.name || product.category}
+            </td>
+            <td data-label="Datas especiais" className="cell-special-dates">
+              {(product.specialDateCategoryIds || []).length === 0 ? (
+                <span className="muted-text">Nenhuma</span>
+              ) : (
+                <div className="mini-tags">
+                  {(product.specialDateCategoryIds || []).map((categoryId) => (
+                    <span key={categoryId}>
+                      {specialDateCategories.find((category) => category.id === categoryId)?.name || categoryId}
+                    </span>
+                  ))}
+                </div>
+              )}
             </td>
             <td data-label="Preco" className="cell-price">R$ {product.price.toFixed(2)}</td>
             <td data-label="Estoque">

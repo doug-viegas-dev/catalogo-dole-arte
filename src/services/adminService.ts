@@ -1,4 +1,4 @@
-import type { Category, Product, StoreSettings } from '../types';
+import type { Category, Product, SpecialDateCategory, StoreSettings } from '../types';
 import { firebaseService } from './firebase';
 import type { User } from 'firebase/auth';
 
@@ -63,6 +63,14 @@ export const adminService = {
 
   async deleteCategory(id: string): Promise<void> {
     await firebaseService.deleteCategoryFromFirebase(id);
+  },
+
+  async saveSpecialDateCategory(category: SpecialDateCategory): Promise<void> {
+    await firebaseService.saveSpecialDateCategoryToFirebase(category);
+  },
+
+  async deleteSpecialDateCategory(id: string): Promise<void> {
+    await firebaseService.deleteSpecialDateCategoryFromFirebase(id);
   },
 
   async saveSettings(settings: StoreSettings): Promise<void> {

@@ -1,4 +1,4 @@
-import type { Product, Category, StoreSettings, SpecialDateItem } from '../types';
+import type { Product, Category, StoreSettings, SpecialDateCategory, SpecialDateItem } from '../types';
 
 const EMPTY_SETTINGS: StoreSettings = {
   storeName: '',
@@ -13,9 +13,49 @@ const EMPTY_SETTINGS: StoreSettings = {
 
 export const SPECIAL_DATES: SpecialDateItem[] = [];
 
+export const DEFAULT_SPECIAL_DATE_CATEGORIES: SpecialDateCategory[] = [
+  {
+    id: 'dia-das-maes',
+    name: 'Dia das Maes',
+    description: 'Presentes personalizados para emocionar maes e figuras maternas.',
+    tag: 'Maio',
+  },
+  {
+    id: 'dia-dos-namorados',
+    name: 'Dia dos Namorados',
+    description: 'Ideias romanticas para casais, pedidos e lembrancas afetivas.',
+    tag: '12 Jun',
+  },
+  {
+    id: 'dia-dos-pais',
+    name: 'Dia dos Pais',
+    description: 'Produtos criativos para pais, avos e pessoas especiais.',
+    tag: 'Agosto',
+  },
+  {
+    id: 'professores',
+    name: 'Dia dos Professores',
+    description: 'Lembrancinhas e kits para homenagear educadores.',
+    tag: '15 Out',
+  },
+  {
+    id: 'natal',
+    name: 'Natal',
+    description: 'Presentes personalizados para familia, amigos e empresas.',
+    tag: 'Dezembro',
+  },
+  {
+    id: 'aniversario',
+    name: 'Aniversarios',
+    description: 'Produtos para celebrar datas pessoais e lembrancas de festa.',
+    tag: 'Todo ano',
+  },
+];
+
 const STORAGE_PRODUCTS_KEY = 'dolearte_products_v3';
 const STORAGE_SETTINGS_KEY = 'dolearte_settings_v3';
 const STORAGE_CATEGORIES_KEY = 'dolearte_categories_v3';
+const STORAGE_SPECIAL_DATE_CATEGORIES_KEY = 'dolearte_special_date_categories_v1';
 
 const readJson = <T,>(key: string, fallback: T): T => {
   try {
@@ -49,6 +89,21 @@ export const storeService = {
       localStorage.setItem(STORAGE_CATEGORIES_KEY, JSON.stringify(categories));
     } catch (e) {
       console.error('Error saving categories', e);
+    }
+  },
+
+  getSpecialDateCategories(): SpecialDateCategory[] {
+    return readJson<SpecialDateCategory[]>(
+      STORAGE_SPECIAL_DATE_CATEGORIES_KEY,
+      DEFAULT_SPECIAL_DATE_CATEGORIES,
+    );
+  },
+
+  saveSpecialDateCategories(specialDateCategories: SpecialDateCategory[]): void {
+    try {
+      localStorage.setItem(STORAGE_SPECIAL_DATE_CATEGORIES_KEY, JSON.stringify(specialDateCategories));
+    } catch (e) {
+      console.error('Error saving special date categories', e);
     }
   },
 

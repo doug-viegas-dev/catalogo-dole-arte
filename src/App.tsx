@@ -10,8 +10,8 @@ import { Contact } from './components/Contact';
 import { Footer } from './components/Footer';
 import './App.scss';
 
-import { SPECIAL_DATES, storeService } from './services/store';
-import type { Product, StoreSettings, Category } from './types';
+import { storeService } from './services/store';
+import type { Product, StoreSettings, Category, SpecialDateCategory } from './types';
 
 const AdminPanel = React.lazy(() => (
   import('./components/AdminPanel').then((module) => ({ default: module.AdminPanel }))
@@ -28,6 +28,9 @@ const getInitialPage = (): 'home' | 'admin' => (
 export const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>(storeService.getCategories());
+  const [specialDateCategories, setSpecialDateCategories] = useState<SpecialDateCategory[]>(
+    storeService.getSpecialDateCategories(),
+  );
   const [settings, setSettings] = useState<StoreSettings>(storeService.getSettings());
   const [selectedCategory, setSelectedCategory] = useState<string>('todas');
   
@@ -52,14 +55,17 @@ export const App: React.FC = () => {
         const { firebaseService } = await import('./services/firebase');
         const loadedProducts = await firebaseService.syncProductsFromFirebase();
         const loadedCategories = await firebaseService.syncCategoriesFromFirebase();
+        const loadedSpecialDateCategories = await firebaseService.syncSpecialDateCategoriesFromFirebase();
         const loadedSettings = await firebaseService.getSettingsFromFirebase();
         setProducts(loadedProducts);
         setCategories(loadedCategories);
+        setSpecialDateCategories(loadedSpecialDateCategories);
         setSettings(loadedSettings);
       } catch (err) {
         console.error('Error in initial load, using local storage fallback', err);
         setProducts(storeService.getProducts());
         setCategories(storeService.getCategories());
+        setSpecialDateCategories(storeService.getSpecialDateCategories());
         setSettings(storeService.getSettings());
       } finally {
         setLoading(false);
@@ -76,6 +82,11 @@ export const App: React.FC = () => {
   const handleUpdateCategories = (updatedCategories: Category[]) => {
     setCategories(updatedCategories);
     storeService.saveCategories(updatedCategories);
+  };
+
+  const handleUpdateSpecialDateCategories = (updatedCategories: SpecialDateCategory[]) => {
+    setSpecialDateCategories(updatedCategories);
+    storeService.saveSpecialDateCategories(updatedCategories);
   };
 
   const handleUpdateSettings = (updatedSettings: StoreSettings) => {
@@ -111,9 +122,11 @@ export const App: React.FC = () => {
           products={products}
           settings={settings}
           categories={categories}
+          specialDateCategories={specialDateCategories}
           onUpdateProducts={handleUpdateProducts}
           onUpdateSettings={handleUpdateSettings}
           onUpdateCategories={handleUpdateCategories}
+          onUpdateSpecialDateCategories={handleUpdateSpecialDateCategories}
           onBackToStore={handleBackToStore}
         />
       </Suspense>
@@ -143,7 +156,11 @@ export const App: React.FC = () => {
 
         <HowItWorks />
 
-        {SPECIAL_DATES.length > 0 && <SpecialDates items={SPECIAL_DATES} />}
+        <SpecialDates
+          categories={specialDateCategories}
+          products={products}
+          whatsappNumber={settings.whatsappNumber}
+        />
 
         <About settings={settings} />
 

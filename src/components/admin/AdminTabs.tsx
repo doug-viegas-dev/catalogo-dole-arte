@@ -4,10 +4,17 @@ interface AdminTabsProps {
   activeTab: AdminTab;
   categoriesCount: number;
   productsCount: number;
+  specialDateCategoriesCount: number;
   onChange: (tab: AdminTab) => void;
 }
 
-export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, categoriesCount, productsCount, onChange }) => (
+export const AdminTabs: React.FC<AdminTabsProps> = ({
+  activeTab,
+  categoriesCount,
+  productsCount,
+  specialDateCategoriesCount,
+  onChange,
+}) => (
   <div className="admin-tabs-nav">
     <button
       className={`admin-tab-btn ${activeTab === 'products' ? 'active' : ''}`}
@@ -20,6 +27,12 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({ activeTab, categoriesCount
       onClick={() => onChange('categories')}
     >
       Categorias ({categoriesCount})
+    </button>
+    <button
+      className={`admin-tab-btn ${activeTab === 'specialDates' ? 'active' : ''}`}
+      onClick={() => onChange('specialDates')}
+    >
+      Datas especiais ({specialDateCategoriesCount})
     </button>
     <button
       className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`}

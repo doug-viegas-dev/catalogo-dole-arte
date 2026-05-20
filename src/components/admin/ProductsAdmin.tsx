@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-react';
-import type { Category, Product } from '../../types';
+import type { Category, Product, SpecialDateCategory } from '../../types';
 import { ProductFilters } from './ProductFilters';
 import { ProductForm } from './ProductForm';
 import { ProductTable } from './ProductTable';
@@ -7,6 +7,7 @@ import type { ProductStockFilter } from './types';
 
 interface ProductsAdminProps {
   categories: Category[];
+  specialDateCategories: SpecialDateCategory[];
   filteredProducts: Product[];
   isAddingNewProduct: boolean;
   isImageUploading: boolean;
@@ -32,6 +33,7 @@ interface ProductsAdminProps {
 
 export const ProductsAdmin: React.FC<ProductsAdminProps> = ({
   categories,
+  specialDateCategories,
   filteredProducts,
   isAddingNewProduct,
   isImageUploading,
@@ -58,6 +60,7 @@ export const ProductsAdmin: React.FC<ProductsAdminProps> = ({
     return (
       <ProductForm
         categories={categories}
+        specialDateCategories={specialDateCategories}
         isAddingNewProduct={isAddingNewProduct}
         isImageUploading={isImageUploading}
         isLoading={isLoading}
@@ -98,6 +101,7 @@ export const ProductsAdmin: React.FC<ProductsAdminProps> = ({
       <div className="admin-table-container">
         <ProductTable
           categories={categories}
+          specialDateCategories={specialDateCategories}
           products={filteredProducts}
           onDeleteProduct={onDeleteProduct}
           onEditProduct={onEditProduct}

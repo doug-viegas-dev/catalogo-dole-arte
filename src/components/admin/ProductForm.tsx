@@ -1,8 +1,9 @@
 import { Image as ImageIcon, Save, Upload, X } from 'lucide-react';
-import type { Category, Product } from '../../types';
+import type { Category, Product, SpecialDateCategory } from '../../types';
 
 interface ProductFormProps {
   categories: Category[];
+  specialDateCategories: SpecialDateCategory[];
   isAddingNewProduct: boolean;
   isImageUploading: boolean;
   isLoading: boolean;
@@ -16,6 +17,7 @@ interface ProductFormProps {
 
 export const ProductForm: React.FC<ProductFormProps> = ({
   categories,
+  specialDateCategories,
   isAddingNewProduct,
   isImageUploading,
   isLoading,
@@ -27,6 +29,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   onSave,
 }) => {
   const images = product.imageUrls?.length ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
+  const selectedSpecialDateIds = product.specialDateCategoryIds || [];
   const handleRequiresMinQuantityChange = (requiresMinQuantity: boolean) => {
     if (requiresMinQuantity) {
       onProductChange({
@@ -40,6 +43,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     const productWithoutMinQuantity = { ...product };
     delete productWithoutMinQuantity.minQuantity;
     onProductChange({ ...productWithoutMinQuantity, requiresMinQuantity });
+  };
+
+  const handleSpecialDateToggle = (categoryId: string, checked: boolean) => {
+    const nextIds = checked
+      ? Array.from(new Set([...selectedSpecialDateIds, categoryId]))
+      : selectedSpecialDateIds.filter((id) => id !== categoryId);
+
+    onProductChange({ ...product, specialDateCategoryIds: nextIds });
   };
 
   return (
@@ -157,6 +168,28 @@ export const ProductForm: React.FC<ProductFormProps> = ({
             <option value="true">Sim, exibir com destaque</option>
             <option value="false">Nao</option>
           </select>
+        </div>
+
+        <div className="form-group full-width">
+          <label>Datas especiais em que este produto aparece</label>
+          <div className="special-date-checklist">
+            {specialDateCategories.length === 0 && (
+              <p>Cadastre uma data especial primeiro.</p>
+            )}
+            {specialDateCategories.map((category) => (
+              <label key={category.id} className="checkbox-control">
+                <input
+                  type="checkbox"
+                  checked={selectedSpecialDateIds.includes(category.id)}
+                  onChange={(event) => handleSpecialDateToggle(category.id, event.target.checked)}
+                />
+                <span>
+                  <strong>{category.name}</strong>
+                  <small>{category.description}</small>
+                </span>
+              </label>
+            ))}
+          </div>
         </div>
 
         <div className="form-group">
